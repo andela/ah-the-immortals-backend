@@ -1,7 +1,7 @@
 Authors Haven - A Social platform for the creative at heart.
 =======
 [![Build Status](https://travis-ci.org/andela/ah-the-immortals-backend.svg?branch=develop)](https://travis-ci.org/andela/ah-the-immortals-backend)
-
+[![Coverage Status](https://coveralls.io/repos/github/andela/ah-the-immortals-backend/badge.svg?branch=develop)](https://coveralls.io/github/andela/ah-the-immortals-backend?branch=develop)
 ## Vision
 Create a community of like minded authors to foster inspiration and innovation
 by leveraging the modern web.
