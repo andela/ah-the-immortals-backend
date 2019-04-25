@@ -1,0 +1,24 @@
+language: python
+
+python:
+  - "3.6.7"
+
+addons:
+  postgresql: "9.4"
+
+install:
+  - pip install -r requirements.txt
+  - pip install coveralls
+
+before_script:
+  - psql -c "create database authorsheaven;" -U postgres
+
+script:
+- python manage.py makemigrations
+- python manage.py migrate
+- python manage.py test
+- coverage run --source='.' manage.py test
+- coverage report 
+
+after_success:
+  - coveralls
