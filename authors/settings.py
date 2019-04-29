@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/1.11/ref/settings/
 
 import os
 import django_heroku
+import cloudinary
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -41,6 +42,7 @@ INSTALLED_APPS = [
     'django_extensions',
     'rest_framework',
     'rest_framework_swagger',
+    'cloudinary',
 
     'authors.apps.authentication',
     'authors.apps.core',
@@ -58,6 +60,12 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+cloudinary.config(
+    cloud_name = os.getenv('CLOUDINARY_NAME'),
+    api_key = os.getenv('CLOUDINARY_KEY'),
+    api_secret = os.getenv('CLOUDINARY_SECRET')
+)
 
 ROOT_URLCONF = 'authors.urls'
 

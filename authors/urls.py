@@ -21,8 +21,11 @@ from rest_framework_swagger.views import get_swagger_view
 schema_view = get_swagger_view(title="The Immortals Api Swagger Docs")
 authurls = include(('authors.apps.authentication.urls',
                     'authentication'), namespace='authentication')
+profileurls = include(('authors.apps.profiles.urls',
+                    'profiles'), namespace='profile')
 urlpatterns = [
     path('admin/', admin.site.urls),
     url(r'^api/', authurls),
     url(r'^api/swagger/$', schema_view),
+    path('api/', profileurls),
 ]
