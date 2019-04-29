@@ -103,7 +103,6 @@ class LoginSerializer(serializers.Serializer):
             raise serializers.ValidationError(
                 'An email address is required to log in.'
             )
-
         # As mentioned above, a password is required. Raise an exception if a
         # password is not provided.
         if password is None:
@@ -131,6 +130,10 @@ class LoginSerializer(serializers.Serializer):
         if not user.is_active:
             raise serializers.ValidationError(
                 'This user has been deactivated.'
+            )
+        if not user.is_verified:
+            raise serializers.ValidationError(
+                'This user has not been verified'
             )
 
         # The `validate` method should return a dictionary of validated data.

@@ -44,6 +44,7 @@ class UserManager(BaseUserManager):
       user = self.create_user(username, email, password)
       user.is_superuser = True
       user.is_staff = True
+      user.is_verified=True
       user.save()
 
       return user
@@ -68,6 +69,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     # letting them delete it. That way they won't show up on the site anymore,
     # but we can still analyze the data.
     is_active = models.BooleanField(default=True)
+    is_verified = models.BooleanField(default=False)
 
     # The `is_staff` flag is expected by Django to determine who can and cannot
     # log into the Django admin site. For most users, this flag will always be

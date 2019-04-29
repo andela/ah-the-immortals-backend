@@ -26,11 +26,18 @@ class BaseTest(APITestCase):
             email="adam@gmail.com",
             password="@Us3r.com"
         )
+
+        self.user.is_verified=True
+        self.user.save()
+
         self.user1 = User.objects.create_user(
             username="eri",
             email="eric@gmail.com",
             password="@Us3r.com"
         )
+
+        self.user1.is_verified=True
+        self.user1.save()
 
     def login_user(self, email="", password=""):
         """
