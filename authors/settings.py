@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     'oauth2_provider',
     'social_django',
     'rest_framework_social_oauth2',
+    'rest_framework.authtoken',
 
     'authors.apps.authentication',
     'authors.apps.core',
@@ -75,7 +76,7 @@ ROOT_URLCONF = 'authors.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [os.path.join(os.path.dirname(__file__), 'templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -214,5 +215,12 @@ SWAGGER_SETTINGS = {
         }
     }
 }
-
+DOMAIN_NAME=os.getenv('DOMAIN_NAME')
+PASSWORD_RESET_URL_PREFIX='https://{}/password/reset/?token='.format(DOMAIN_NAME)
+EMAIL_BACKEND = os.getenv('EMAIL_BACKEND')
+EMAIL_HOST = os.getenv('EMAIL_HOST')
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
+EMAIL_PORT = os.getenv('EMAIL_PORT')
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
+EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS')
 django_heroku.settings(locals())

@@ -5,6 +5,7 @@ import json
 from django.contrib.auth import get_user_model
 from rest_framework.test import APITestCase, APIClient
 from rest_framework.reverse import reverse
+from rest_framework.authtoken.models import Token
 
 User = get_user_model()
 
@@ -63,7 +64,7 @@ class BaseTest(APITestCase):
             }, settings.SECRET_KEY, algorithm='HS256'
         )
         return token.decode('utf-8')
-     
+
     def generate_expired_token(self):
         """
         Generates a token that expires after one second for testing purposes
@@ -163,3 +164,54 @@ class BaseTest(APITestCase):
         Method to login user using social authentication
         """
         return self.client.post(social_url, social_user)
+
+class PasswordResetBaseTest(BaseTest):
+    """
+    Base test for testing passeord reset
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.client = APIClient()
+        self.email = self.user.email
+        self.password_reset_url = reverse("authentication:password_reset")
+        self.token = None
+        self.password_reset_confirm_url = reverse(
+            "authentication:password_reset_confirm")
+        self.reset_data = {
+            "user": {
+                "email": self.email
+            }
+        }
+        self.password_data = {
+            "token": self.token,
+            "password": "HenkDTestPAss!#",
+            "password_confirm": "HenkDTestPAss!#"
+        }
+        self.contains_error = lambda container, error: error in container
+
+    def password_reset(self):
+        """
+        Verifies user account and generates reset password
+        token
+        """
+        response = self.client.post(
+            path=self.password_reset_url,
+            data=self.reset_data,
+            format="json"
+        )
+        token, created = Token.objects.get_or_create(user=self.user)
+        self.token = token.key
+        self.password_data["token"] = self.token
+        return response
+
+    def password_reset_confirm(self):
+        """
+        Confirms password reset by posting new password
+        """
+        response = self.client.post(
+            path=self.password_reset_confirm_url,
+            data=self.password_data,
+            format="json"
+        )
+        return response
