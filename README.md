@@ -1,14 +1,21 @@
-Authors Haven - A Social platform for the creative at heart.
-=======
+# Authors Haven - A Social platform for the creative at heart.
+
 [![Build Status](https://travis-ci.org/andela/ah-the-immortals-backend.svg?branch=develop)](https://travis-ci.org/andela/ah-the-immortals-backend)
 [![Coverage Status](https://coveralls.io/repos/github/andela/ah-the-immortals-backend/badge.svg?branch=develop)](https://coveralls.io/github/andela/ah-the-immortals-backend?branch=develop)
+
 ## Vision
+
 Create a community of like minded authors to foster inspiration and innovation
 by leveraging the modern web.
 
 ---
 
+## APi swagger documenation
+
+[Link to swagger documention](https://ah-the-immortals-staging.herokuapp.com/api/swagger/)
+
 ## API Spec
+
 The preferred JSON object to be returned by the API should be structured as follows:
 
 ### Users (for authentication)
@@ -24,7 +31,9 @@ The preferred JSON object to be returned by the API should be structured as foll
   }
 }
 ```
+
 ### Profile
+
 ```source-json
 {
   "profile": {
@@ -35,7 +44,9 @@ The preferred JSON object to be returned by the API should be structured as foll
   }
 }
 ```
+
 ### Single Article
+
 ```source-json
 {
   "article": {
@@ -57,7 +68,9 @@ The preferred JSON object to be returned by the API should be structured as foll
   }
 }
 ```
+
 ### Multiple Articles
+
 ```source-json
 {
   "articles":[{
@@ -97,7 +110,9 @@ The preferred JSON object to be returned by the API should be structured as foll
   "articlesCount": 2
 }
 ```
+
 ### Single Comment
+
 ```source-json
 {
   "comment": {
@@ -114,7 +129,9 @@ The preferred JSON object to be returned by the API should be structured as foll
   }
 }
 ```
+
 ### Multiple Comments
+
 ```source-json
 {
   "comments": [{
@@ -132,7 +149,9 @@ The preferred JSON object to be returned by the API should be structured as foll
   "commentsCount": 1
 }
 ```
+
 ### List of Tags
+
 ```source-json
 {
   "tags": [
@@ -141,7 +160,9 @@ The preferred JSON object to be returned by the API should be structured as foll
   ]
 }
 ```
+
 ### Errors and Status Codes
+
 If a request fails any validations, expect errors in the following format:
 
 ```source-json
@@ -153,16 +174,16 @@ If a request fails any validations, expect errors in the following format:
   }
 }
 ```
+
 ### Other status codes:
+
 401 for Unauthorized requests, when a request requires authentication but it isn't provided
 
 403 for Forbidden requests, when a request may be valid but the user doesn't have permissions to perform the action
 
 404 for Not found requests, when a resource can't be found to fulfill the request
 
-
-Endpoints:
-----------
+## Endpoints:
 
 ### Authentication:
 
@@ -393,28 +414,36 @@ No additional parameters required
 `GET /api/tags`
 
 ## Local Setup
- - First Create python virtual env
- ```
-  $ virtualenv -p python3 env
- ```
- - Install Requirements
- ```
-  $ pip install -r requirements.txt
- ```
- - Create a .env file and set variables as in the .env-example
 
- - Create postgres database
- ```
-  $ psql postgres
-  postgres=# CREATE USER your-user WITH PASSWORD 'your-password';
-  postgres=# ALTER ROLE your-user SET client_encoding TO 'utf8';
-  postgres=# ALTER ROLE your-user SET default_transaction_isolation TO 'read committed';
-  postgres=# ALTER ROLE your-user SET timezone TO 'UTC';
-  postgres=# CREATE DATABASE your-database-name;
-  postgres=# GRANT ALL PRIVILEGES ON DATABASE your-database-name TO your-user;
-  postgres=# \q
- ```
- - Run Server
- ```
-  $ python manage.py runserver
- ```
+- First Create python virtual env
+
+```
+ $ virtualenv -p python3 env
+```
+
+- Install Requirements
+
+```
+ $ pip install -r requirements.txt
+```
+
+- Create a .env file and set variables as in the .env-example
+
+- Create postgres database
+
+```
+ $ psql postgres
+ postgres=# CREATE USER your-user WITH PASSWORD 'your-password';
+ postgres=# ALTER ROLE your-user SET client_encoding TO 'utf8';
+ postgres=# ALTER ROLE your-user SET default_transaction_isolation TO 'read committed';
+ postgres=# ALTER ROLE your-user SET timezone TO 'UTC';
+ postgres=# CREATE DATABASE your-database-name;
+ postgres=# GRANT ALL PRIVILEGES ON DATABASE your-database-name TO your-user;
+ postgres=# \q
+```
+
+- Run Server
+
+```
+ $ python manage.py runserver
+```
