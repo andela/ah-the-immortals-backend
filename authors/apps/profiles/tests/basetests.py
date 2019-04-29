@@ -124,3 +124,10 @@ class BaseTest(APITestCase):
             ),
             content_type="application/json"
         )
+    def list_profiles(self):
+        """
+        Method to get all profiles
+        """
+        urls = reverse("profiles:list_users")
+        response = self.client.get(urls)
+        return response

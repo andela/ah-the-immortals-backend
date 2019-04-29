@@ -38,3 +38,10 @@ class FollowingSerializer(serializers.ModelSerializer):
     class Meta:
         model = Followers
         fields = ('profile', 'followed')
+class UserListSerializer(serializers.ModelSerializer):
+    """
+    Serializer class for getting user profile
+    """
+    class Meta:
+        model = Profile
+        fields = '__all__'

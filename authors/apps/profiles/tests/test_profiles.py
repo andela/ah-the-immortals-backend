@@ -63,3 +63,21 @@ class TestViewProfile(BaseTest):
             "Abraham", "Kamau", "I love history")
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(response.data.get("error"), "User does not exist")
+
+    def test_successfully_listing_profiles(self):
+        """
+        Test listing of user profiles 
+        """
+        self.is_authenticated("adam@gmail.com", "@Us3r.com")
+        response = self.list_profiles()
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIsInstance(response.data.get("profiles")[0], dict)
+
+    def test_listing_profiles_with_unauthorised_user(self):
+        """
+        Test listing of user profiles with unauthorised user
+        """
+        response = self.list_profiles()
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.data.get("detail"),
+                         "Authentication credentials were not provided.")
