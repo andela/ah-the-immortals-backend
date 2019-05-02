@@ -18,17 +18,35 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Profile',
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('id', models.AutoField(auto_created=True,
+                                        primary_key=True, serialize=False, verbose_name='ID')),
                 ('first_name', models.CharField(blank=True, max_length=30)),
                 ('last_name', models.CharField(blank=True, max_length=30)),
                 ('bio', models.TextField(blank=True, max_length=500)),
-                ('image', cloudinary.models.CloudinaryField(default='https://res.cloudinary.com/grean/image/upload/v1556488518/samples/vbioaj1wwewmtmeryucv.jpg', max_length=255, verbose_name='image')),
+                ('image', cloudinary.models.CloudinaryField(
+                    default='https://res.cloudinary.com/grean/image/upload/v1556488518/samples/vbioaj1wwewmtmeryucv.jpg', max_length=255, verbose_name='image')),
                 ('created_at', models.DateTimeField(auto_now_add=True)),
                 ('updated_at', models.DateTimeField(auto_now=True)),
-                ('user', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)),
+                ('user', models.OneToOneField(
+                    on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)),
             ],
             options={
                 'ordering': ['created_at'],
+            },
+        ),
+        migrations.CreateModel(
+            name='Followers',
+            fields=[
+                ('id', models.AutoField(auto_created=True,
+                                        primary_key=True, serialize=False, verbose_name='ID')),
+                ('followed', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE,
+                                               related_name='w_followed', to='profiles.Profile')),
+                ('profile', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE,
+                                              related_name='w_following', to=settings.AUTH_USER_MODEL)),
+            ],
+            options={
+                'verbose_name': 'Followers',
+                'verbose_name_plural': 'Followers',
             },
         ),
     ]
