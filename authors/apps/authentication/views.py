@@ -11,8 +11,21 @@ from social_core.exceptions import MissingBackend
 from .renderers import UserJSONRenderer
 from .serializers import (
     LoginSerializer, RegistrationSerializer, UserSerializer,
-    SocialAuthSerializer
+    SocialAuthSerializer,
+    PasswordResetSerializer,
+    PasswordResetConfirmSerializer
 )
+from django.contrib.auth import get_user_model
+from rest_framework.authtoken.models import Token
+from rest_framework.authentication import (
+    TokenAuthentication,
+    get_authorization_header
+)
+from rest_framework.generics import GenericAPIView
+from authors.utils.mailer import VerificationMail
+from django.utils import timezone
+
+User = get_user_model()
 
 
 class RegistrationAPIView(GenericAPIView):
@@ -128,3 +141,58 @@ class SocialAuthAPIView(CreateAPIView):
             serializer = UserSerializer(user)
             serializer.instance = user
             return Response(serializer.data, status=status.HTTP_200_OK)
+class PasswordResetView(GenericAPIView):
+    """
+    Sends password reset email with id token
+    """
+    permission_classes = (AllowAny,)
+    serializer_class = PasswordResetSerializer
+
+    def post(self, request):
+        data = request.data.get("user")
+        serializer = self.serializer_class(data=data)
+        serializer.is_valid(raise_exception=True)
+        email = data.get("email")
+        user = User.objects.get(email=email)
+        token, created = Token.objects.get_or_create(user=user)
+        if not created:
+            token.created = timezone.now()
+            token.save()
+        VerificationMail(user, token).send_mail()
+        response = Response(
+            data={"data": [{
+                "message": "An email has been sent to your email address to reset your password"
+            }]},
+            status=status.HTTP_200_OK
+        )
+        return response
+
+
+class PasswordResetConfirmView(GenericAPIView):
+    """
+    Confirms password reset after retrieving token embedded in mail
+    """
+    permission_classes = (AllowAny,)
+    serializer_class = PasswordResetConfirmSerializer
+
+    def post(self, request):
+        response = None
+        data = request.data
+        token, password = (
+            data.get("token"),
+            data.get("password")
+        )
+        serializer = self.serializer_class(data=data)
+        serializer.is_valid(raise_exception=True)
+        token_object = Token.objects.get(key=token)
+        user = token_object.user
+        user.set_password(password)
+        user.save()
+        token_object.delete()
+        response = Response(
+            data={"data": [{
+                "message": "you have successfully reset your password"
+            }]},
+            status=status.HTTP_200_OK
+        )
+        return response

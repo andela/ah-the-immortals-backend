@@ -282,6 +282,38 @@ Authentication required, returns the User
 
 Accepted fields: `email`, `username`, `password`, `image`, `bio`
 
+### Password Reset
+`POST /api/users/password/reset/`
+
+Example request body:
+
+```source-json
+{
+	"user":{
+		"email":"codingbrian58@gmail.com"
+	}
+}
+```
+
+No authentication required, returns a token
+
+Required fields: `email`
+
+### Password Reset Confirm
+`POST /api/users/password/reset/confirm/`
+
+Example request body:
+
+```source-json
+{
+	"token":"bb57bb7c779d2c7872c8621d5735e3b8170d6105",
+	"password":"passroneggne2424",
+	"password_confirm":"passroneggne2424"
+}
+```
+
+No authentication required, returns a success message
+
 ### Get Profile
 
 `GET /api/profiles/:username`

@@ -4,6 +4,12 @@ from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 
 from .models import User
+from django.core.validators import EmailValidator
+from django.core.exceptions import ValidationError
+from django.core.exceptions import ObjectDoesNotExist
+from django.utils import timezone
+from rest_framework.authtoken.models import Token
+from django.contrib.auth.password_validation import validate_password
 
 
 class RegistrationSerializer(serializers.ModelSerializer):
@@ -205,3 +211,61 @@ class SocialAuthSerializer(serializers.Serializer):
         allow_blank=True,
         default=""
     )
+class PasswordResetSerializer(serializers.Serializer):
+    """
+    Serializer for password reset
+    """
+    email = serializers.EmailField(required=True)
+
+    def validate_email(self, value):
+        try:
+            EmailValidator(value)
+        except ValidationError as e:
+            raise serializers.ValidationError(e)
+        try:
+            User.objects.get(email=value)
+        except ObjectDoesNotExist:
+            raise serializers.ValidationError(
+                "no account with that email address"
+            )
+
+
+class PasswordResetConfirmSerializer(serializers.Serializer):
+    """
+    Serializer class for password reset confirm
+    """
+    token = serializers.CharField(max_length=250, required=True)
+    password = serializers.CharField(max_length=250, required=True)
+    password_confirm = serializers.CharField(max_length=250, required=True)
+
+    def validate(self, data):
+        try:
+            token_object = Token.objects.get(key=data.get("token"))
+        except ObjectDoesNotExist:
+            raise serializers.ValidationError({
+                "token": "invalid token"
+            })
+        if self.expired_token(token_object):
+            raise serializers.ValidationError({
+                "token": "invalid token"
+            })
+        try:
+            validate_password(data.get("password"))
+        except ValidationError as error:
+            raise serializers.ValidationError({
+                "password": list(error)
+            })
+        if data["password"] != data["password_confirm"]:
+            raise serializers.ValidationError({
+                "password": "passwords did not match"
+            })
+        return data
+
+    def expired_token(self, auth_token):
+        """
+        Checks expiry of token
+        """
+        utc_now = timezone.now()
+        expired = auth_token.created < utc_now - \
+            timezone.timedelta(hours=24)
+        return expired
