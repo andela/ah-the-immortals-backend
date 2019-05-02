@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/1.11/ref/settings/
 import os
 import django_heroku
 import cloudinary
+import environ
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -37,12 +38,15 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-
     'corsheaders',
     'django_extensions',
+    'django_social_share',
     'rest_framework',
     'rest_framework_swagger',
     'cloudinary',
+    'oauth2_provider',
+    'social_django',
+    'rest_framework_social_oauth2',
 
     'authors.apps.authentication',
     'authors.apps.core',
@@ -50,7 +54,6 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
-    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     # 'corsheaders.middleware.CorsMiddleware',
@@ -80,10 +83,53 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'social_django.context_processors.backends',
+                'social_django.context_processors.login_redirect',
             ],
         },
     },
 ]
+
+AUTHENTICATION_BACKENDS = (
+    'rest_framework_social_oauth2.backends.DjangoOAuth2',
+    'django.contrib.auth.backends.ModelBackend',
+)
+
+SOCIAL_AUTH_FACEBOOK_KEY = os.getenv('SOCIAL_AUTH_FACEBOOK_KEY')
+SOCIAL_AUTH_FACEBOOK_SECRET = os.getenv('SOCIAL_AUTH_FACEBOOK_SECRET')
+SOCIAL_AUTH_FACEBOOK_SCOPE = ['email']
+SOCIAL_AUTH_FACEBOOK_PROFILE_EXTRA_PARAMS = {
+    'fields': 'id, name, email'
+}
+
+SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = os.getenv('SOCIAL_AUTH_GOOGLE_OAUTH2_KEY')
+SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = os.getenv('SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET')
+SOCIAL_AUTH_GOOGLE_OAUTH2_SCOPE = ['email', 'username']
+
+SOCIAL_AUTH_TWITTER_KEY = os.getenv('SOCIAL_AUTH_TWITTER_KEY')
+SOCIAL_AUTH_TWITTER_SECRET = os.getenv('SOCIAL_AUTH_TWITTER_SECRET')
+SOCIAL_AUTH_TWITTER_SCOPE = ['email']
+
+SOCIAL_AUTH_PIPELINE = (
+    'social_core.pipeline.social_auth.social_details',
+    'social_core.pipeline.social_auth.social_uid',
+    'social_core.pipeline.social_auth.auth_allowed',
+    'social_core.pipeline.social_auth.social_user',
+    'social_core.pipeline.user.get_username',
+    'social_core.pipeline.social_auth.associate_by_email',
+    'social_core.pipeline.user.create_user',
+    'social_core.pipeline.social_auth.associate_user',
+    'social_core.pipeline.social_auth.load_extra_data',
+    'social_core.pipeline.user.user_details',
+)
+
+AUTHENTICATION_BACKENDS = (
+    'social_core.backends.google.GoogleOAuth2',
+    'social_core.backends.facebook.FacebookAppOAuth2',
+    'social_core.backends.facebook.FacebookOAuth2',
+    'social_core.backends.twitter.TwitterOAuth',
+    'django.contrib.auth.backends.ModelBackend',
+)
 
 WSGI_APPLICATION = 'authors.wsgi.application'
 

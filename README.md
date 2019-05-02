@@ -220,6 +220,38 @@ Example request body:
 }
 ```
 
+### Social Login:
+
+`POST /api/users/oauth/`
+
+Example request body:
+
+```source-json
+Google:
+
+{
+    "provider": "google-oauth2",
+    "access_token": "ya29.Glv7BiLGfjDIpSy2CcYIvd_GVLDZx"
+  }
+
+
+Facebook:
+
+{
+    "provider": "facebook",
+    "access_token": "ya29.Glv7BiLGfjDIpSy2CcYIvd_GVLDZx"
+  }
+
+
+Twitter:
+
+{
+    "provider": "twitter",
+    "access_token": "96930231-n5vX3t965JQoO3KLyzQnOjlhnoKmXKAaQlX4IVmAN",
+    "access_token_secret": "X8Gd1GXb7MJcmtPjMezN1UUCgaFP518LCEnHZvaUXOqQo"
+  }
+```
+
 No authentication required, returns a User
 
 Required fields: `email`, `username`, `password`

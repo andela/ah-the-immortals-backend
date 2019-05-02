@@ -157,3 +157,9 @@ class BaseTest(APITestCase):
         token = logdata.data['token']
         return self.client.credentials(
             HTTP_AUTHORIZATION='Bearer ' + token)
+
+    def social_login(self, social_url, social_user):
+        """
+        Method to login user using social authentication
+        """
+        return self.client.post(social_url, social_user)

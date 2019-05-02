@@ -152,7 +152,7 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ('email', 'username', 'password')
+        fields = ('email', 'username', 'token', 'password')
 
         # The `read_only_fields` option is an alternative for explicitly
         # specifying the field with `read_only=True` like we did for password
@@ -188,3 +188,20 @@ class UserSerializer(serializers.ModelSerializer):
         instance.save()
 
         return instance
+
+
+class SocialAuthSerializer(serializers.Serializer):
+
+    provider = serializers.CharField(
+        max_length=30,
+        required=True
+    )
+    access_token = serializers.CharField(
+        max_length=255,
+        required=True
+    )
+    access_token_secret = serializers.CharField(
+        max_length=255,
+        allow_blank=True,
+        default=""
+    )
