@@ -51,3 +51,22 @@ def create_user_profile(sender, instance, created, **kwargs):
 @receiver(post_save, sender=User)
 def save_user_profile(sender, instance, **kwargs):
     instance.profile.save()
+
+
+class Followers(models.Model):
+    """Model definition for Followers."""
+
+    profile = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="w_following")
+    followed = models.ForeignKey(
+        Profile, on_delete=models.CASCADE, related_name="w_followed")
+
+    class Meta:
+        """Meta definition for Followers."""
+
+        verbose_name = "Followers"
+        verbose_name_plural = "Followers"
+
+    def __str__(self):
+        """Unicode representation of Followers."""
+        return str(self.id)

@@ -1,6 +1,8 @@
 from rest_framework import serializers
 
 from .models import Profile
+from .models import Followers
+
 
 class UserProfileSerializer(serializers.ModelSerializer):
     """
@@ -9,11 +11,13 @@ class UserProfileSerializer(serializers.ModelSerializer):
     username = serializers.ReadOnlyField(source='fetch_username')
     img_url = serializers.ReadOnlyField(source='fetch_image')
     created_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S")
+
     class Meta:
         model = Profile
         fields = (
             'username', 'first_name', 'last_name', 'bio', 'img_url', 'created_at'
         )
+
 
 class UpdateUserProfileSerializer(serializers.ModelSerializer):
     """
@@ -24,3 +28,13 @@ class UpdateUserProfileSerializer(serializers.ModelSerializer):
         fields = (
             'first_name', 'last_name', 'bio', 'image'
         )
+
+
+class FollowingSerializer(serializers.ModelSerializer):
+    """"
+    Serializer class to get the users following the user
+    """
+
+    class Meta:
+        model = Followers
+        fields = ('profile', 'followed')
