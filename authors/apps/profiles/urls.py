@@ -5,6 +5,8 @@ from .views import FollowAPI, FollowersAPI
 
 from authors.apps.profiles.views import (UserProfileView, UpdateUserProfileView, UserListView)
 
+from authors.apps.profiles.views import (UserProfileView, UpdateUserProfileView)
+
 app_name = 'profiles'
 
 urlpatterns = [

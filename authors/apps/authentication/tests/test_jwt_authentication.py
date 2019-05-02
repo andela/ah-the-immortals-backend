@@ -7,16 +7,21 @@ class TestTokenAuthentication(BaseTest):
     This class handles the testing of JWTAuthentication
     """
 
+    def test_get_jwt_with_unverified_user_after_login(self):
+        self.signup_user('Pablo', 'pablo@escobar.com', 'TheMerin123')
+        response = self.login_user('pablo@escobar.com', 'TheMerin123')
+        self.assertIn('error', str(response.data))
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
     def test_get_jwt_after_login(self):
         self.signup_user('issa', 'issamwangi@gmail.com', 'Maina9176')
+        self.verify_user('issamwangi@gmail.com')
         response = self.login_user('issamwangi@gmail.com', 'Maina9176')
-        self.assertIn('token', str(response.data))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_get_jwt_after_signup(self):
         response = self.signup_user(
             'issa', 'issamwangi@gmail.com', 'Maina9176')
-        self.assertIn('token', str(response.data))
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
     def test_invalid_authorization_header(self):

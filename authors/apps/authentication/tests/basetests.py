@@ -24,17 +24,21 @@ class BaseTest(APITestCase):
         self.register_url = reverse("authentication:registration")
         self.update_url = reverse("authentication:update_get")
         self.get_url = reverse("authentication:update_get")
+        # self.verification_of_user = reverse("authentication:signup_verification")
         self.user = User.objects.create_user(
             username="adam",
             email="adam@gmail.com",
-            password="@Us3r.com"
+            password="@Us3r.com",
         )
+        self.user.is_verified=True
+        self.user.save()
 
         self.user1 = User.objects.create_user(
             username="ian",
             email="ian@gmail.com",
             password="Maina9176",
         )
+        self.user1.is_verified=True
         self.user1 = User.objects.get(username='ian')
         self.user1.is_active = False
         self.user1.save()
@@ -45,10 +49,26 @@ class BaseTest(APITestCase):
             password="Maina9176",
         )
 
+        self.user3 = User.objects.create_user(
+            username="Escobar",
+            email="pablo@escobar.com",
+            password="Maina9176",
+        )
+
+        self.user4 = User.objects.create_user(
+            username="Elchapo",
+            email="el@chapo.com",
+            password="Maina9176",
+        )
+
+        self.user4.is_verified=True
+        self.user4.save()
+
+
         self.super_user = User.objects.create_superuser(
             username="admin",
             email="admin@authors.com",
-            password="adm123Pass!!"
+            password="adm123Pass!!",
         )
 
     def generate_jwt_token(self, email, username):
@@ -162,6 +182,61 @@ class BaseTest(APITestCase):
     def social_login(self, social_url, social_user):
         """
         Method to login user using social authentication
+        """
+        return self.client.post(social_url, social_user)
+
+    def verify_user(self, email=""):
+        """
+        To verify a user
+        """
+        user = User.objects.get(email=email)
+        user.is_verified = True
+        user.save()
+
+
+class PasswordResetBaseTest(BaseTest):
+    """
+    Base test for testing passeord reset
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.client = APIClient()
+        self.email = self.user.email
+        self.password_reset_url = reverse("authentication:password_reset")
+        self.token = None
+        self.password_reset_confirm_url = reverse(
+            "authentication:password_reset_confirm")
+        self.reset_data = {
+            "user": {
+                "email": self.email
+            }
+        }
+        self.password_data = {
+            "token": self.token,
+            "password": "HenkDTestPAss!#",
+            "password_confirm": "HenkDTestPAss!#"
+        }
+        self.contains_error = lambda container, error: error in container
+
+    def password_reset(self):
+        """
+        Verifies user account and generates reset password
+        token
+        """
+        response = self.client.post(
+            path=self.password_reset_url,
+            data=self.reset_data,
+            format="json"
+        )
+        token, created = Token.objects.get_or_create(user=self.user)
+        self.token = token.key
+        self.password_data["token"] = self.token
+        return response
+
+    def password_reset_confirm(self):
+        """
+        Confirms password reset by posting new password
         """
         return self.client.post(social_url, social_user)
 

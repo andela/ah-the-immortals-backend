@@ -1,3 +1,10 @@
+from .backends import JWTAuthentication
+from ..utils.mailer import ConfirmationMail
+import jwt
+
+from django.conf import settings
+from django.contrib.auth import get_user_model
+
 from rest_framework import status
 from rest_framework.generics import RetrieveUpdateAPIView, GenericAPIView, CreateAPIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -8,7 +15,7 @@ from social_django.utils import load_backend, load_strategy
 from social_core.backends.oauth import BaseOAuth1, BaseOAuth2
 from social_core.exceptions import MissingBackend
 
-from .renderers import UserJSONRenderer
+from .renderers import UserJSONRenderer, SignupUserJSONRenderer
 from .serializers import (
     LoginSerializer, RegistrationSerializer, UserSerializer,
     SocialAuthSerializer,
@@ -28,10 +35,15 @@ from django.utils import timezone
 User = get_user_model()
 
 
+auth = JWTAuthentication()
+
+User = get_user_model()
+
+
 class RegistrationAPIView(GenericAPIView):
     # Allow any user (authenticated or not) to hit this endpoint.
     permission_classes = (AllowAny,)
-    renderer_classes = (UserJSONRenderer,)
+    renderer_classes = (SignupUserJSONRenderer,)
     serializer_class = RegistrationSerializer
 
     def post(self, request):
@@ -40,11 +52,19 @@ class RegistrationAPIView(GenericAPIView):
         # The create serializer, validate serializer, save serializer pattern
         # below is common and you will see it a lot throughout this course and
         # your own work later on. Get familiar with it.
+
         serializer = self.serializer_class(data=user)
         serializer.is_valid(raise_exception=True)
         serializer.save()
 
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        ConfirmationMail(serializer.data).send_mail()
+
+        message = {
+            "email": serializer.data['email'],
+            "username": serializer.data['username']
+        }
+
+        return Response(message, status=status.HTTP_201_CREATED)
 
 
 class LoginAPIView(GenericAPIView):
@@ -61,7 +81,6 @@ class LoginAPIView(GenericAPIView):
         # handles everything we need.
         serializer = self.serializer_class(data=user)
         serializer.is_valid(raise_exception=True)
-
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
@@ -111,7 +130,8 @@ class SocialAuthAPIView(CreateAPIView):
         strategy = load_strategy(request)
         try:
             # checks the backend of the social auth provider in the request
-            backend = load_backend(strategy=strategy, name=provider, redirect_uri=None)
+            backend = load_backend(
+                strategy=strategy, name=provider, redirect_uri=None)
         except MissingBackend:
             # exception thrown if backend for the given provider is not available
             return Response({"error": "Provider invalid or not supported"},
@@ -123,7 +143,7 @@ class SocialAuthAPIView(CreateAPIView):
             token = {
                 'oauth_token': serializer.data.get('access_token'),
                 'oauth_token_secret': serializer.data.get('access_token_secret')
-                }
+            }
         elif isinstance(backend, BaseOAuth2):
             token = serializer.data.get('access_token')
         try:
@@ -131,7 +151,7 @@ class SocialAuthAPIView(CreateAPIView):
             # Otherwise if they exist they are just logged in to their account
             user = backend.do_auth(token, user=authenticated_user)
         except BaseException as e:
-            # Throws an error if the request tries to associate one social account with multiple users 
+            # Throws an error if the request tries to associate one social account with multiple users
             return Response({"error": "Invalid credentials"}, status=status.HTTP_400_BAD_REQUEST)
 
         # persist to database if new user and return the user object
@@ -141,6 +161,8 @@ class SocialAuthAPIView(CreateAPIView):
             serializer = UserSerializer(user)
             serializer.instance = user
             return Response(serializer.data, status=status.HTTP_200_OK)
+
+
 class PasswordResetView(GenericAPIView):
     """
     Sends password reset email with id token
@@ -196,3 +218,22 @@ class PasswordResetConfirmView(GenericAPIView):
             status=status.HTTP_200_OK
         )
         return response
+
+
+class SignupEmailVerificationView(GenericAPIView):
+    """ Verification of email """
+
+    def get(self, request, token):
+
+        user_data = auth.authenticate_token(request, token)
+        user_email = user_data[0].email
+        user = User.objects.get(email=user_email)
+        if user.is_verified:
+            return Response({
+                "message": "Your email is already verified"
+            }, status.HTTP_406_NOT_ACCEPTABLE)
+        user.is_verified = True
+        user.save()
+        return Response({
+            "message": "You have been verified successfully"
+        }, status.HTTP_200_OK)

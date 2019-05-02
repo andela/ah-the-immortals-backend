@@ -34,7 +34,6 @@ class TestUserSignup(BaseTest):
         """
         response = self.signup_user("eve", "eve@gmail.com", "@Us3r.com")
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertIn('token', str(response.data))
 
     def test_signup_without_value(self):
         """
