@@ -1,20 +1,15 @@
 from .backends import JWTAuthentication
 from ..utils.mailer import ConfirmationMail
 import jwt
-
 from django.conf import settings
-from django.contrib.auth import get_user_model
-
 from rest_framework import status
 from rest_framework.generics import RetrieveUpdateAPIView, GenericAPIView, CreateAPIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-
 from social_django.utils import load_backend, load_strategy
 from social_core.backends.oauth import BaseOAuth1, BaseOAuth2
 from social_core.exceptions import MissingBackend
-
 from .renderers import UserJSONRenderer, SignupUserJSONRenderer
 from .serializers import (
     LoginSerializer, RegistrationSerializer, UserSerializer,
@@ -28,15 +23,10 @@ from rest_framework.authentication import (
     TokenAuthentication,
     get_authorization_header
 )
-from rest_framework.generics import GenericAPIView
 from authors.utils.mailer import VerificationMail
 from django.utils import timezone
 
-User = get_user_model()
-
-
 auth = JWTAuthentication()
-
 User = get_user_model()
 
 
@@ -183,7 +173,7 @@ class PasswordResetView(GenericAPIView):
         VerificationMail(user, token).send_mail()
         response = Response(
             data={"data": [{
-                "message": "An email has been sent to your email address to reset your password"
+                "message": "A password reset message was sent to your email address. Please click the link in that message to reset your password"
             }]},
             status=status.HTTP_200_OK
         )
@@ -198,12 +188,13 @@ class PasswordResetConfirmView(GenericAPIView):
     serializer_class = PasswordResetConfirmSerializer
 
     def post(self, request):
-        response = None
+        request.POST._mutable = True
         data = request.data
         token, password = (
-            data.get("token"),
+            request.GET.get("token"),
             data.get("password")
         )
+        data["token"] = token
         serializer = self.serializer_class(data=data)
         serializer.is_valid(raise_exception=True)
         token_object = Token.objects.get(key=token)
@@ -213,7 +204,7 @@ class PasswordResetConfirmView(GenericAPIView):
         token_object.delete()
         response = Response(
             data={"data": [{
-                "message": "you have successfully reset your password"
+                "message": "You have successfully reset your password"
             }]},
             status=status.HTTP_200_OK
         )

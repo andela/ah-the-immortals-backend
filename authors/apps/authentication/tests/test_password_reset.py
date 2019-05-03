@@ -37,7 +37,7 @@ class TestPasswordReset(PasswordResetBaseTest):
         self.assertEqual(
             self.contains_error(
                 response.data.get("errors").get("email"),
-                "This field is required."
+                "Please provide your email address"
             ), True
         )
 
@@ -54,7 +54,7 @@ class TestPasswordReset(PasswordResetBaseTest):
         self.assertEqual(
             self.contains_error(
                 response.data.get("errors").get("email"),
-                "This field may not be blank."
+                "Please provide your email address"
             ), True
         )
 
@@ -71,8 +71,23 @@ class TestPasswordReset(PasswordResetBaseTest):
         self.assertEqual(
             self.contains_error(
                 response.data.get("errors").get("email"),
-                "This field may not be null."
+                "Please provide your email address"
             ), True
+        )
+
+    def test_successful_reset_link_sent(self):
+        """
+        Tests for successful sending of the password
+        reset link
+        """
+        response = self.password_reset()
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK
+        )
+        self.assertEqual(
+            response.data.get("data")[0].get("message"),
+            "A password reset message was sent to your email address. Please click the link in that message to reset your password"
         )
 
     def test_unexisting_ccount(self):
@@ -88,7 +103,7 @@ class TestPasswordReset(PasswordResetBaseTest):
         self.assertEqual(
             self.contains_error(
                 response.data.get("errors").get("email"),
-                "no account with that email address"
+                "No account with that email address"
             ), True
         )
 
@@ -106,7 +121,7 @@ class TestPasswordReset(PasswordResetBaseTest):
         self.assertEqual(
             self.contains_error(
                 response.data.get("errors").get("password"),
-                "passwords did not match"
+                "Passwords did not match"
             ), True
         )
 
@@ -133,7 +148,7 @@ class TestPasswordReset(PasswordResetBaseTest):
         """
         Tests changing of password with invalid token
         """
-        self.password_data["token"] = "abcd898adwhi3454asddwhfwh"
+        self.generate_fake_token()
         response = self.password_reset_confirm()
         self.assertEqual(
             response.status_code,
@@ -142,13 +157,13 @@ class TestPasswordReset(PasswordResetBaseTest):
         self.assertEqual(
             self.contains_error(
                 response.data.get("errors").get("token"),
-                "invalid token"
+                "Invalid token"
             ), True
         )
 
     def test_null_token(self):
         """
-        Tests password reset without a null token
+        Tests for null token
         """
         response = self.password_reset_confirm()
         self.assertEqual(
@@ -158,15 +173,12 @@ class TestPasswordReset(PasswordResetBaseTest):
         self.assertEqual(
             self.contains_error(
                 response.data.get("errors").get("token"),
-                "This field may not be null."
+                "There is no token provided"
             ), True
         )
 
-    def test_blank_token(self):
-        """
-        Tests a blank token
-        """
-        self.password_data["token"] = ""
+    def test_expired_token(self):
+        self.generate_expired_token()
         response = self.password_reset_confirm()
         self.assertEqual(
             response.status_code,
@@ -175,15 +187,17 @@ class TestPasswordReset(PasswordResetBaseTest):
         self.assertEqual(
             self.contains_error(
                 response.data.get("errors").get("token"),
-                "This field may not be blank."
+                "Expired token"
             ), True
         )
 
-    def test_missing_token_field(self):
+    def test_token_reuse(self):
         """
-        Tests missing token field
+        Tests if a user can use token generated more than once to
+        reset password
         """
-        del self.password_data["token"]
+        self.password_reset()
+        self.password_reset_confirm()
         response = self.password_reset_confirm()
         self.assertEqual(
             response.status_code,
@@ -192,7 +206,7 @@ class TestPasswordReset(PasswordResetBaseTest):
         self.assertEqual(
             self.contains_error(
                 response.data.get("errors").get("token"),
-                "This field is required."
+                "Invalid token"
             ), True
         )
 
@@ -210,7 +224,7 @@ class TestPasswordReset(PasswordResetBaseTest):
         self.assertEqual(
             self.contains_error(
                 response.data.get("errors").get("password"),
-                "This field may not be null."
+                "Please provide your password"
             ), True
         )
 
@@ -228,15 +242,16 @@ class TestPasswordReset(PasswordResetBaseTest):
         self.assertEqual(
             self.contains_error(
                 response.data.get("errors").get("password"),
-                "This field may not be blank."
+                "Please provide your password"
             ), True
         )
 
-    def test_missing_password_field(self):
+    def test_missing_password(self):
         """
         Tests missing password field
         """
         del self.password_data["password"]
+        self.password_reset()
         response = self.password_reset_confirm()
         self.assertEqual(
             response.status_code,
@@ -245,7 +260,83 @@ class TestPasswordReset(PasswordResetBaseTest):
         self.assertEqual(
             self.contains_error(
                 response.data.get("errors").get("password"),
-                "This field is required."
+                "Please provide your password"
+            ), True
+        )
+
+    def test_less_than_2_uppercase_in_password(self):
+        """
+        Tests a password that has less than two uppercase letters
+        """
+        self.password_data["password"] = "Henkdestpass23!#"
+        self.password_data["password_confirm"] = "Henkdestpass23!#"
+        self.password_reset()
+        response = self.password_reset_confirm()
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_400_BAD_REQUEST
+        )
+        self.assertEqual(
+            self.contains_error(
+                response.data.get("errors").get("password"),
+                "Your password should have a minimum of 2 uppercase letters"
+            ), True
+        )
+
+    def test_less_than_2_numbers_in_password(self):
+        """
+        Tests for a password that has less than two integers from {0...9}
+        """
+        self.password_data["password"] = "HenkDTestPAss2!#"
+        self.password_data["password_confirm"] = "HenkDTestPAss2!#"
+        self.password_reset()
+        response = self.password_reset_confirm()
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_400_BAD_REQUEST
+        )
+        self.assertEqual(
+            self.contains_error(
+                response.data.get("errors").get("password"),
+                "Your password should have a minimum of 2  numbers"
+            ), True
+        )
+
+    def test_special_character_in_password(self):
+        """
+        Tests for a password that has no special character
+        """
+        self.password_data["password"] = "HenkDTestPAss23"
+        self.password_data["password_confirm"] = "HenkDTestPAss23"
+        self.password_reset()
+        response = self.password_reset_confirm()
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_400_BAD_REQUEST
+        )
+        self.assertEqual(
+            self.contains_error(
+                response.data.get("errors").get("password"),
+                "Your password should have a minimum of 1 special character"
+            ), True
+        )
+
+    def test_less_than_3_lowercase_in_password(self):
+        """
+        Tests for password with less than three lowercase letters
+        """
+        self.password_data["password"] = "HENKKDTAKPAab23!#"
+        self.password_data["password_confirm"] = "HENKKDTAKPAab23!#"
+        self.password_reset()
+        response = self.password_reset_confirm()
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_400_BAD_REQUEST
+        )
+        self.assertEqual(
+            self.contains_error(
+                response.data.get("errors").get("password"),
+                "Your password should have a minimum of 3 lowercase letters"
             ), True
         )
 
@@ -263,7 +354,7 @@ class TestPasswordReset(PasswordResetBaseTest):
         self.assertEqual(
             self.contains_error(
                 response.data.get("errors").get("password_confirm"),
-                "This field may not be blank."
+                "Please confirm your password"
             ), True
         )
 
@@ -281,15 +372,16 @@ class TestPasswordReset(PasswordResetBaseTest):
         self.assertEqual(
             self.contains_error(
                 response.data.get("errors").get("password_confirm"),
-                "This field may not be null."
+                "Please confirm your password"
             ), True
         )
 
-    def test_missing_password_confirm_field(self):
+    def test_missing_password_confirm(self):
         """
         Tests missing password field
         """
         del self.password_data["password_confirm"]
+        self.password_reset()
         response = self.password_reset_confirm()
         self.assertEqual(
             response.status_code,
@@ -298,7 +390,32 @@ class TestPasswordReset(PasswordResetBaseTest):
         self.assertEqual(
             self.contains_error(
                 response.data.get("errors").get("password_confirm"),
-                "This field is required."
+                "Please confirm your password"
+            ), True
+        )
+
+    def test_missing_password_and_password_confirm(self):
+        """
+        Tests when a password and a confirmation password is missing
+        """
+        del self.password_data["password"]
+        del self.password_data["password_confirm"]
+        self.password_reset()
+        response = self.password_reset_confirm()
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_400_BAD_REQUEST
+        )
+        self.assertEqual(
+            self.contains_error(
+                response.data.get("errors").get("password"),
+                "Please provide your password"
+            ), True
+        )
+        self.assertEqual(
+            self.contains_error(
+                response.data.get("errors").get("password_confirm"),
+                "Please confirm your password"
             ), True
         )
 
@@ -319,24 +436,5 @@ class TestPasswordReset(PasswordResetBaseTest):
         )
         self.assertEqual(
             message,
-            "you have successfully reset your password"
-        )
-
-    def test_token_reuse(self):
-        """
-        Tests if a user can use token generated more than once to
-        reset password
-        """
-        self.password_reset()
-        self.password_reset_confirm()
-        response = self.password_reset_confirm()
-        self.assertEqual(
-            response.status_code,
-            status.HTTP_400_BAD_REQUEST
-        )
-        self.assertEqual(
-            self.contains_error(
-                response.data.get("errors").get("token"),
-                "invalid token"
-            ), True
+            "You have successfully reset your password"
         )

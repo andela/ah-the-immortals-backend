@@ -1,8 +1,6 @@
 from django.contrib.auth import authenticate
-
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
-
 from .models import User
 from django.core.validators import EmailValidator
 from django.core.exceptions import ValidationError
@@ -10,6 +8,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.utils import timezone
 from rest_framework.authtoken.models import Token
 from django.contrib.auth.password_validation import validate_password
+from password_strength import PasswordStats
 
 
 class RegistrationSerializer(serializers.ModelSerializer):
@@ -214,55 +213,138 @@ class SocialAuthSerializer(serializers.Serializer):
         allow_blank=True,
         default=""
     )
+
+
 class PasswordResetSerializer(serializers.Serializer):
     """
     Serializer for password reset
     """
-    email = serializers.EmailField(required=True)
+    email = serializers.EmailField(
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        write_only=True
+    )
 
-    def validate_email(self, value):
+    def validate(self, data):
+        email = data.get("email")
+        if not email:
+            raise serializers.ValidationError({
+                "email": "Please provide your email address"
+            })
         try:
-            EmailValidator(value)
+            EmailValidator(email)
         except ValidationError as e:
             raise serializers.ValidationError(e)
         try:
-            User.objects.get(email=value)
+            User.objects.get(email=email)
         except ObjectDoesNotExist:
-            raise serializers.ValidationError(
-                "no account with that email address"
-            )
+            raise serializers.ValidationError({
+                "email": "No account with that email address"
+            })
+        return data
 
 
 class PasswordResetConfirmSerializer(serializers.Serializer):
     """
     Serializer class for password reset confirm
     """
-    token = serializers.CharField(max_length=250, required=True)
-    password = serializers.CharField(max_length=250, required=True)
-    password_confirm = serializers.CharField(max_length=250, required=True)
+    token = serializers.CharField(
+        max_length=250,
+        write_only=True,
+        allow_null=True,
+        allow_blank=True,
+        required=False
+    )
+    password = serializers.CharField(
+        max_length=250,
+        write_only=True,
+        allow_null=True,
+        allow_blank=True,
+        required=False
+    )
+    password_confirm = serializers.CharField(
+        max_length=250,
+        write_only=True,
+        allow_null=True,
+        allow_blank=True,
+        required=False
+    )
 
     def validate(self, data):
+        if not data.get("token"):
+            raise serializers.ValidationError({
+                "token": "There is no token provided"
+            })
         try:
             token_object = Token.objects.get(key=data.get("token"))
         except ObjectDoesNotExist:
             raise serializers.ValidationError({
-                "token": "invalid token"
+                "token": "Invalid token"
             })
         if self.expired_token(token_object):
             raise serializers.ValidationError({
-                "token": "invalid token"
+                "token": "Expired token"
             })
+        self.get_password_field_erros(data)
         try:
             validate_password(data.get("password"))
         except ValidationError as error:
             raise serializers.ValidationError({
                 "password": list(error)
             })
-        if data["password"] != data["password_confirm"]:
-            raise serializers.ValidationError({
-                "password": "passwords did not match"
-            })
+        self.get_password_policy_rrors(data.get("password"))
         return data
+
+    def get_password_policy_rrors(self, password):
+        """
+        Captures password policy errors
+        """
+        stats = PasswordStats(password)
+        password_errors = []
+        if stats.letters_uppercase < 2:
+            password_errors.append(
+                "Your password should have a minimum of 2 uppercase letters"
+            )
+        if stats.numbers < 2:
+            password_errors.append(
+                "Your password should have a minimum of 2  numbers"
+            )
+        if stats.special_characters < 1:
+            password_errors.append(
+                "Your password should have a minimum of 1 special character"
+            )
+        elif stats.letters_lowercase < 3:
+            password_errors.append(
+                "Your password should have a minimum of 3 lowercase letters"
+            )
+        if password_errors:
+            raise serializers.ValidationError({
+                "password": list(password_errors)
+            })
+
+    def get_password_field_erros(self, data):
+        """
+        Captures null, blank and empty fields for password
+        and password confirm
+        """
+        if not data.get("password") and not data.get("password_confirm"):
+            raise serializers.ValidationError({
+                "password": "Please provide your password",
+                "password_confirm": "Please confirm your password"
+            })
+        elif not data.get("password"):
+            raise serializers.ValidationError({
+                "password": "Please provide your password"
+            })
+        elif not data.get("password_confirm"):
+            raise serializers.ValidationError({
+                "password_confirm": "Please confirm your password"
+            })
+        elif data["password"] != data["password_confirm"]:
+            raise serializers.ValidationError({
+                "password": "Passwords did not match"
+            })
 
     def expired_token(self, auth_token):
         """

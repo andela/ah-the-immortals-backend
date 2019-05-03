@@ -66,9 +66,9 @@ MIDDLEWARE = [
 ]
 
 cloudinary.config(
-    cloud_name = os.getenv('CLOUDINARY_NAME'),
-    api_key = os.getenv('CLOUDINARY_KEY'),
-    api_secret = os.getenv('CLOUDINARY_SECRET')
+    cloud_name=os.getenv('CLOUDINARY_NAME'),
+    api_key=os.getenv('CLOUDINARY_KEY'),
+    api_secret=os.getenv('CLOUDINARY_SECRET')
 )
 
 ROOT_URLCONF = 'authors.urls'
@@ -104,7 +104,8 @@ SOCIAL_AUTH_FACEBOOK_PROFILE_EXTRA_PARAMS = {
 }
 
 SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = os.getenv('SOCIAL_AUTH_GOOGLE_OAUTH2_KEY')
-SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = os.getenv('SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET')
+SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = os.getenv(
+    'SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET')
 SOCIAL_AUTH_GOOGLE_OAUTH2_SCOPE = ['email', 'username']
 
 SOCIAL_AUTH_TWITTER_KEY = os.getenv('SOCIAL_AUTH_TWITTER_KEY')
@@ -154,7 +155,8 @@ SOCIAL_AUTH_FACEBOOK_PROFILE_EXTRA_PARAMS = {
 }
 
 SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = os.getenv('SOCIAL_AUTH_GOOGLE_OAUTH2_KEY')
-SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = os.getenv('SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET')
+SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = os.getenv(
+    'SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET')
 SOCIAL_AUTH_GOOGLE_OAUTH2_SCOPE = ['email', 'username']
 
 SOCIAL_AUTH_TWITTER_KEY = os.getenv('SOCIAL_AUTH_TWITTER_KEY')
@@ -265,12 +267,13 @@ SWAGGER_SETTINGS = {
         }
     }
 }
-DOMAIN_NAME=os.getenv('DOMAIN_NAME')
-PASSWORD_RESET_URL_PREFIX='https://{}/password/reset/?token='.format(DOMAIN_NAME)
+PASSWORD_RESET_URL_PREFIX = '{}/api/users/password/reset/confirm/?token='.format(
+    DOMAIN)
 EMAIL_BACKEND = os.getenv('EMAIL_BACKEND')
 EMAIL_HOST = os.getenv('EMAIL_HOST')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
 EMAIL_PORT = os.getenv('EMAIL_PORT')
 EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
 EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS')
+DEFAULT_EMAIL = "noreply@authorsheaven.com"
 django_heroku.settings(locals())

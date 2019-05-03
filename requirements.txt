@@ -2,12 +2,11 @@ astroid==2.2.5
 atomicwrites==1.3.0
 attrs==19.1.0
 autopep8==1.4.4
-cloudinary==1.15.0
 certifi==2019.3.9
 chardet==3.0.4
+cloudinary==1.15.0
 coreapi==2.3.3
 coreschema==0.0.4
-cloudinary==1.15.0
 coverage==4.5.3
 defusedxml==0.6.0
 dj-database-url==0.5.0
@@ -17,9 +16,9 @@ django-cors-middleware==1.2.0
 django-environ==0.4.5
 django-extensions==2.1.6
 django-heroku==0.3.1
-django-rest-swagger==2.1.2
 django-oauth-toolkit==1.2.0
 django-rest-framework-social-oauth2==1.1.0
+django-rest-swagger==2.1.2
 django-social-share==0.0.3
 djangorestframework==3.9.2
 gunicorn==19.9.0
@@ -32,9 +31,10 @@ MarkupSafe==1.1.1
 mccabe==0.6.1
 mock==2.0.0
 more-itertools==7.0.0
-openapi-codec==1.3.2
-pbr==5.2.0
 oauthlib==3.0.1
+openapi-codec==1.3.2
+password-strength==0.0.3.post2
+pbr==5.2.0
 pluggy==0.9.0
 psycopg2==2.8.2
 psycopg2-binary==2.8.2
@@ -46,8 +46,8 @@ pytest==4.4.1
 python3-openid==3.1.0
 pytz==2019.1
 requests==2.21.0
-simplejson==3.16.0
 requests-oauthlib==1.2.0
+simplejson==3.16.0
 six==1.10.0
 social-auth-app-django==3.1.0
 social-auth-core==3.1.0
