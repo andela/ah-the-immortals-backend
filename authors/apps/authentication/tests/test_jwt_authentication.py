@@ -14,14 +14,14 @@ class TestTokenAuthentication(BaseTest):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_get_jwt_after_login(self):
-        self.signup_user('issa', 'issamwangi@gmail.com', 'Maina9176')
+        self.signup_user('issa', 'issamwangi@gmail.com', '@UUss35r.com')
         self.verify_user('issamwangi@gmail.com')
-        response = self.login_user('issamwangi@gmail.com', 'Maina9176')
+        response = self.login_user('issamwangi@gmail.com', '@UUss35r.com')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_get_jwt_after_signup(self):
         response = self.signup_user(
-            'issa', 'issamwangi@gmail.com', 'Maina9176')
+            'issa', 'issamwangi@gmail.com', '@UUss35r.com')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
     def test_invalid_authorization_header(self):

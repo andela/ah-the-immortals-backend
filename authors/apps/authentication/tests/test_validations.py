@@ -14,7 +14,7 @@ class TestValidations(BaseTest):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         errors = response.data['errors']
         self.assertEqual(
-            errors['username'][0], "Username should have no spaces or special characters only")
+            errors['username'][0], "Username should be at least 3 characters, have no spaces or special characters except hyphen-, fullstop. and underscore_")
 
     def test_empty_username(self):
         """
@@ -33,7 +33,8 @@ class TestValidations(BaseTest):
         response = self.signup_user("adam", "test@gmail.com", "12qQqetfdt")
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         errors = response.data['errors']
-        self.assertEqual(errors['username'][0], "username already taken")
+        self.assertEqual(errors['username'][0],
+                         "user with this username already exists")
 
     def test_invalid_email(self):
         """
@@ -43,7 +44,7 @@ class TestValidations(BaseTest):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         errors = response.data['errors']
         self.assertEqual(
-            errors['email'][0], "Email must be of the format name@domain.com and should not contain any special characters before @")
+            errors['email'][0], "Email must be of the format name@domain.com")
 
     def test_existing_email(self):
         """
@@ -65,14 +66,4 @@ class TestValidations(BaseTest):
         self.assertEqual(errors['password'][0],
                          "Password must be at least 8 characters long")
         self.assertEqual(
-            errors['password'][1], "Password must have alphanumeric characters with no space")
-
-    def test_non_alphanumeric_password(self):
-        """
-        Test user signup with the special characters as password
-        """
-        response = self.signup_user("test", "test@gmail.com", "@@@@@@@@@@")
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        errors = response.data['errors']
-        self.assertEqual(
-            errors['password'][0], "Password must have alphanumeric characters with no space")
+            errors['password'][1], "Password must have three lowercase, two upercase, one special case letters and two digits eg 12aaaAA@")
