@@ -16,8 +16,14 @@ class RegistrationSerializer(serializers.ModelSerializer):
 
     # Ensure passwords are at least 8 characters long, no longer than 30
     # Password has no spaces
+    # Ensure password has two uppercase letters
+    # Ensure password has one special case letter.
+    # Ensure password has two digits
+    # Ensure password has three lowercase letters
+
     password = serializers.RegexField(
-        regex=("^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)\S{8,}$"),
+        regex=(
+            "^(?=.*[A-Z].*[A-Z])(?=.*[!@#$&*])(?=.*[0-9].*[0-9])(?=.*[a-z].*[a-z].*[a-z]).{8,}$"),
         max_length=30,
         min_length=8,
         write_only=True,
@@ -26,7 +32,7 @@ class RegistrationSerializer(serializers.ModelSerializer):
             'required': 'Password is a required field',
             'min_length': 'Password must be at least 8 characters long',
             'max_length': 'Password cannot be more than 30 characters',
-            'invalid': 'Password must have alphanumeric characters with no space',
+            'invalid': 'Password must have three lowercase, two upercase, one special case letters and two digits eg 12aaaAA@',
         }
     )
 
@@ -35,7 +41,7 @@ class RegistrationSerializer(serializers.ModelSerializer):
     # Email should have no spaces
     email = serializers.RegexField(
         regex=(
-            "^[^<>()[\]\\,;:\%=#^\s@\"$&!@]+@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z0-9]+\.)+[a-zA-Z]{2,}))$"),
+            "^([a-zA-Z0-9_\-\.@#]+)@([a-zA-Z0-9_\-\.]+)\.([a-zA-Z]{2,5})$"),
         required=True,
         validators=[
             UniqueValidator(
@@ -44,25 +50,26 @@ class RegistrationSerializer(serializers.ModelSerializer):
             )
         ],
         error_messages={
-            'invalid': 'Email must be of the format name@domain.com and should not contain any special characters before @',
+            'invalid': 'Email must be of the format name@domain.com',
             'required': 'Email is a required field'
         }
     )
 
     # Username should be unique
     # Username should not have spaces or special characters
-    # Underscores and hyphens are allowed
+    # Username should be atleast 3 characters and maximum length of 15
+    # Only Underscores and hyphens are allowed
     username = serializers.RegexField(
-        regex='^(?!.*\ )[A-Za-z\d\-\_]+$',
+        regex='^[a-z0-9._-]{3,15}$',
         required=True,
         validators=[
             UniqueValidator(
                 queryset=User.objects.all(),
-                message='username already taken',
+                message='user with this username already exists',
             )
         ],
         error_messages={
-            'invalid': 'Username should have no spaces or special characters only',
+            'invalid': 'Username should be at least 3 characters, have no spaces or special characters except hyphen-, fullstop. and underscore_',
             'required': 'Username is a required field'
         }
     )
