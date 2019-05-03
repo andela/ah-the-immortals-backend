@@ -88,6 +88,33 @@ class TestUserLogin(BaseTest):
         """
         response = self.login_user("dam@gmail.com", "@Us3r.com")
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['errors']['credentials'][0], 'Wrong email or password.')
+
+    def test_login_without_email(self):
+        """
+        Test user login with the incorrect credentials
+        """
+        response = self.login_user("", "@Us3r.com")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['errors']['email'][0], 'An email address is required to log in.')
+
+    
+    def test_login_without_password(self):
+        """
+        Test user login with the incorrect credentials
+        """
+        response = self.login_user("dam@gmail.com", "")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['errors']['password'][0], 'A password is required to log in.')
+
+    def test_login_without_email_and_password(self):
+        """
+        Test user login with the incorrect credentials
+        """
+        response = self.login_user("", "")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['errors']['password'][0], 'A password is required to log in.')
+        self.assertEqual(response.data['errors']['email'][0], 'An email address is required to log in.')
 
 
 class TestUserUpdate(BaseTest):
