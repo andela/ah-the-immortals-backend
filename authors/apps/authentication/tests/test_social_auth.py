@@ -54,6 +54,22 @@ class TestSocialLogin(BaseTest):
                 "error": "Provider invalid or not supported"
                 }
 
+        self.missing_token = {
+            "provider": "facebook",
+            "access_token": ""
+        }
+
+        self.missing_provider = {
+            "provider": "",
+            "access_token": "96930231-8iCEKaIwsSlQCSpHhFWD7WOJj5KXAN9CZFUkTK"
+        }
+
+        self.missing_token_secret = {
+            "provider": "twitter",
+            "access_token": "96930231-NeiGSUbnIrSjjEQY7LPmZc7Ge7J7FPXIzrHjTLMT4",
+            "access_token_secret": ""
+        }
+
     def test_successful_login_with_google(self):
         """
         Test successful login with google
@@ -115,3 +131,27 @@ class TestSocialLogin(BaseTest):
         res = self.social_login(self.social_url, self.invalid_token)
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(res.data.get('error'), "Invalid credentials")
+
+    def test_missing_access_token(self):
+        """
+        Test missing access token
+        """
+        res = self.social_login(self.social_url, self.missing_token)
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(res.data.get('errors').get('error')[0], "An access token is required for Social Login")
+
+    def test_missing_provider_field(self):
+        """
+        Test missing provider field
+        """
+        res = self.social_login(self.social_url, self.missing_provider)
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(res.data.get('errors').get('error')[0], "A provider is required for Social Login")
+
+    def test_missing_access_token_secret(self):
+        """
+        Test missing access token secret
+        """
+        res = self.social_login(self.social_url, self.missing_token_secret)
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(res.data.get('errors').get('error')[0], "An access token secret is required for Twitter Login")

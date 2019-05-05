@@ -113,22 +113,14 @@ class SocialAuthAPIView(CreateAPIView):
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
         authenticated_user = request.user if not request.user.is_anonymous else None
-        # The social provider given in the request
-        # Facebook, Twitter, Google
         provider = serializer.data.get('provider')
-        # expects to use django
         strategy = load_strategy(request)
         try:
-            # checks the backend of the social auth provider in the request
             backend = load_backend(
                 strategy=strategy, name=provider, redirect_uri=None)
         except MissingBackend:
-            # exception thrown if backend for the given provider is not available
             return Response({"error": "Provider invalid or not supported"},
                             status=status.HTTP_404_NOT_FOUND)
-        # token in the OAuth2 request for facebook and google
-        # requires only the access token
-        # OAuth1 is used by twitter and requires the token and the token secret
         if isinstance(backend, BaseOAuth1):
             token = {
                 'oauth_token': serializer.data.get('access_token'),
@@ -137,14 +129,10 @@ class SocialAuthAPIView(CreateAPIView):
         elif isinstance(backend, BaseOAuth2):
             token = serializer.data.get('access_token')
         try:
-            # if a user with the credentials does not exist, a new user is created
-            # Otherwise if they exist they are just logged in to their account
             user = backend.do_auth(token, user=authenticated_user)
         except BaseException as e:
-            # Throws an error if the request tries to associate one social account with multiple users
             return Response({"error": "Invalid credentials"}, status=status.HTTP_400_BAD_REQUEST)
 
-        # persist to database if new user and return the user object
         if user and user.is_active:
             user.is_verified = True
             user.save()
