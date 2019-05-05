@@ -10,12 +10,16 @@ User = get_user_model()
 
 
 class Profile(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    user = models.OneToOneField(
+        "authentication.User", related_name="profile",
+        on_delete=models.CASCADE)
     first_name = models.CharField(max_length=30, blank=True)
     last_name = models.CharField(max_length=30, blank=True)
     bio = models.TextField(max_length=500, blank=True)
     image = CloudinaryField(
         'image', default='https://res.cloudinary.com/grean/image/upload/v1556488518/samples/vbioaj1wwewmtmeryucv.jpg')
+    following = models.ManyToManyField(
+        'self', symmetrical=False, related_name='w_following')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -24,6 +28,22 @@ class Profile(models.Model):
 
     def __str__(self):
         return self.user.username
+
+    def follow(self, profile):
+        self.following.add(profile)
+
+    def unfollow(self, profile):
+        self.following.remove(profile)
+
+    def following_list(self):
+        return self.following.all()
+
+    def followers_list(self):
+        print(self.w_following.all())
+        return self.w_following.all()
+
+    def if_following(self, profile):
+        return self.following.filter(user_id=profile.id).exists()
 
     @property
     def fetch_username(self):
@@ -51,22 +71,3 @@ def create_user_profile(sender, instance, created, **kwargs):
 @receiver(post_save, sender=User)
 def save_user_profile(sender, instance, **kwargs):
     instance.profile.save()
-
-
-class Followers(models.Model):
-    """Model definition for Followers."""
-
-    profile = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name="w_following")
-    followed = models.ForeignKey(
-        Profile, on_delete=models.CASCADE, related_name="w_followed")
-
-    class Meta:
-        """Meta definition for Followers."""
-
-        verbose_name = "Followers"
-        verbose_name_plural = "Followers"
-
-    def __str__(self):
-        """Unicode representation of Followers."""
-        return str(self.id)
