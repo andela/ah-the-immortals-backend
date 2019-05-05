@@ -26,9 +26,11 @@ class UserProfileView(GenericAPIView):
         try:
             profile = Profile.objects.get(user__username=username)
         except Exception:
-             return Response({
-                 "error": "User does not exist"
-             }, status = status.HTTP_404_NOT_FOUND)
+            return Response({
+                'errors': {
+                    'user': ['User does not exist']
+                }
+            }, status=status.HTTP_404_NOT_FOUND)
 
         serializer = UserProfileSerializer(
             profile, context={'request': request}
@@ -37,6 +39,7 @@ class UserProfileView(GenericAPIView):
         return Response({
             'profile': serializer.data
         }, status=status.HTTP_200_OK)
+
 
 class UpdateUserProfileView(GenericAPIView):
     """
@@ -52,20 +55,24 @@ class UpdateUserProfileView(GenericAPIView):
         try:
             profile = Profile.objects.get(user__username=username)
         except Exception:
-             return Response({
-                 "error": "User does not exist"
-             }, status = status.HTTP_404_NOT_FOUND)
+            return Response({
+                'errors': {
+                    'user': ['User does not exist']
+                }
+            }, status=status.HTTP_404_NOT_FOUND)
         user_name = request.user.username
         if user_name != username:
             return Response({
-                'error': 'You do not own this profile'
+                'errors': {
+                    'user': ['You do not own this profile']
+                }
             }, status=status.HTTP_403_FORBIDDEN)
 
         data = request.data
 
         serializer = UpdateUserProfileSerializer(
             instance=request.user.profile,
-            data=data, 
+            data=data,
             partial=True
         )
         serializer.is_valid()
@@ -189,6 +196,8 @@ class FollowersAPI(GenericAPIView):
             response = {
                 'count': len(profiles), 'current_followers': profiles}
         return Response(response, status=status.HTTP_200_OK)
+
+
 class UserListView(GenericAPIView):
     """
     A class for getting all user profiles
@@ -200,4 +209,4 @@ class UserListView(GenericAPIView):
         serializer = UserListSerializer(queryset, many=True)
         return Response({
             'profiles': serializer.data
-            }, status=status.HTTP_200_OK)
+        }, status=status.HTTP_200_OK)

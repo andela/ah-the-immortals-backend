@@ -24,16 +24,18 @@ class TestViewProfile(BaseTest):
         self.is_authenticated("adam@gmail.com", "@Us3r.com")
         response = self.get_profile_with_invalid_username()
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
-        self.assertEqual(response.data.get("error"), "User does not exist")
+        self.assertEqual(response.data.get("errors").get("user")[0], "User does not exist")
 
     def test_update_profile_successfuly(self):
         """
         Test method for successfully updtaing a user
         """
         self.is_authenticated("adam@gmail.com", "@Us3r.com")
-        response = self.update_user_profile("Abraham", "Kamau", "I love history")
+        response = self.update_user_profile(
+            "Abraham", "Kamau", "I love history")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data.get("profile").get("last_name"), "Kamau")
+        self.assertEqual(response.data.get(
+            "profile").get("last_name"), "Kamau")
 
     def test_update_profile_while_loggedout(self):
         """
@@ -42,7 +44,8 @@ class TestViewProfile(BaseTest):
         response = self.update_user_profile(
             "Abraham", "Kamau", "I love history")
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
-        self.assertEqual(response.data.get("detail"), "Authentication credentials were not provided.")
+        self.assertEqual(response.data.get("detail"),
+                         "Authentication credentials were not provided.")
 
     def test_update_profile_while_not_owner(self):
         """
@@ -52,8 +55,9 @@ class TestViewProfile(BaseTest):
         response = self.update_another_user_profile(
             "Abraham", "Kamau", "I love history")
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
-        self.assertEqual(response.data.get("error"), "You do not own this profile")
-    
+        self.assertEqual(response.data.get("errors").get("user")[0],
+                         "You do not own this profile")
+
     def test_update_profile_while_not_exist(self):
         """
         Test method for updating while user is not owner
@@ -62,7 +66,7 @@ class TestViewProfile(BaseTest):
         response = self.update_user_profile_notexist(
             "Abraham", "Kamau", "I love history")
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
-        self.assertEqual(response.data.get("error"), "User does not exist")
+        self.assertEqual(response.data.get("errors").get("user")[0], "User does not exist")
 
     def test_successfully_listing_profiles(self):
         """

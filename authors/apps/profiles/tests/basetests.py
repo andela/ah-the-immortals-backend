@@ -27,7 +27,7 @@ class BaseTest(APITestCase):
             password="@Us3r.com"
         )
 
-        self.user.is_verified=True
+        self.user.is_verified = True
         self.user.save()
 
         self.user1 = User.objects.create_user(
@@ -36,7 +36,7 @@ class BaseTest(APITestCase):
             password="@Us3r.com"
         )
 
-        self.user1.is_verified=True
+        self.user1.is_verified = True
         self.user1.save()
 
     def login_user(self, email="", password=""):
@@ -131,6 +131,7 @@ class BaseTest(APITestCase):
             ),
             content_type="application/json"
         )
+
     def list_profiles(self):
         """
         Method to get all profiles
