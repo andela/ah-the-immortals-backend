@@ -6,6 +6,7 @@ from django.contrib.auth import get_user_model
 from rest_framework.test import APITestCase, APIClient
 from rest_framework.reverse import reverse
 from rest_framework.authtoken.models import Token
+from django.utils import timezone
 
 User = get_user_model()
 
@@ -30,7 +31,7 @@ class BaseTest(APITestCase):
             email="adam@gmail.com",
             password="@Us3r.com",
         )
-        self.user.is_verified=True
+        self.user.is_verified = True
         self.user.save()
 
         self.user1 = User.objects.create_user(
@@ -38,7 +39,7 @@ class BaseTest(APITestCase):
             email="ian@gmail.com",
             password="Maina9176",
         )
-        self.user1.is_verified=True
+        self.user1.is_verified = True
         self.user1 = User.objects.get(username='ian')
         self.user1.is_active = False
         self.user1.save()
@@ -61,9 +62,8 @@ class BaseTest(APITestCase):
             password="Maina9176",
         )
 
-        self.user4.is_verified=True
+        self.user4.is_verified = True
         self.user4.save()
-
 
         self.super_user = User.objects.create_superuser(
             username="admin",
@@ -213,9 +213,8 @@ class PasswordResetBaseTest(BaseTest):
             }
         }
         self.password_data = {
-            "token": self.token,
-            "password": "HenkDTestPAss!#",
-            "password_confirm": "HenkDTestPAss!#"
+            "password": "HenkDTestPAss23!#",
+            "password_confirm": "HenkDTestPAss23!#"
         }
         self.contains_error = lambda container, error: error in container
 
@@ -231,54 +230,31 @@ class PasswordResetBaseTest(BaseTest):
         )
         token, created = Token.objects.get_or_create(user=self.user)
         self.token = token.key
-        self.password_data["token"] = self.token
+        self.set_password_confirm_url()
         return response
 
-    def password_reset_confirm(self):
+    def generate_fake_token(self):
         """
-        Confirms password reset by posting new password
+        Generates invalid token
         """
-        return self.client.post(social_url, social_user)
+        self.token = "fjeojfoeefubbfbwuebbyvyfvwd24"
+        self.set_password_confirm_url()
 
-class PasswordResetBaseTest(BaseTest):
-    """
-    Base test for testing passeord reset
-    """
-
-    def setUp(self):
-        super().setUp()
-        self.client = APIClient()
-        self.email = self.user.email
-        self.password_reset_url = reverse("authentication:password_reset")
-        self.token = None
-        self.password_reset_confirm_url = reverse(
-            "authentication:password_reset_confirm")
-        self.reset_data = {
-            "user": {
-                "email": self.email
-            }
-        }
-        self.password_data = {
-            "token": self.token,
-            "password": "HenkDTestPAss!#",
-            "password_confirm": "HenkDTestPAss!#"
-        }
-        self.contains_error = lambda container, error: error in container
-
-    def password_reset(self):
+    def generate_expired_token(self):
         """
-        Verifies user account and generates reset password
-        token
+        Generates expired token
         """
-        response = self.client.post(
-            path=self.password_reset_url,
-            data=self.reset_data,
-            format="json"
-        )
         token, created = Token.objects.get_or_create(user=self.user)
+        token.created = timezone.now()-timezone.timedelta(hours=25)
+        token.save()
         self.token = token.key
-        self.password_data["token"] = self.token
-        return response
+        self.set_password_confirm_url()
+
+    def set_password_confirm_url(self):
+        """
+        Sets password confirm url as the token changes
+        """
+        self.password_reset_confirm_url += '?token='+self.token
 
     def password_reset_confirm(self):
         """

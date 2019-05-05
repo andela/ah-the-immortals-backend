@@ -21,13 +21,13 @@ class VerificationMail:
             template_name="password_reset.html",
             context={
                 "name": self.user.username,
-                "action_url": settings.PASSWORD_RESET_URL_PREFIX+self.token.key+'/'
+                "action_url": settings.PASSWORD_RESET_URL_PREFIX+self.token.key
             }
         )
         self.message = EmailMultiAlternatives(
             subject="Password Reset",
             body="This is a mail to reset your password",
-            from_email="customercare@authorsheaven.com",
+            from_email=settings.DEFAULT_EMAIL,
             to=[self.user.email]
         )
         self.message.attach_alternative(html_body, "text/html")
