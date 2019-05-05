@@ -11,11 +11,14 @@ class UserProfileSerializer(serializers.ModelSerializer):
     username = serializers.ReadOnlyField(source='fetch_username')
     img_url = serializers.ReadOnlyField(source='fetch_image')
     created_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S")
+    updated_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S")
+
     class Meta:
         model = Profile
         fields = (
-            'username', 'first_name', 'last_name', 'bio', 'img_url', 'created_at'
+            'username', 'first_name', 'last_name', 'bio', 'img_url', 'created_at', 'updated_at'
         )
+
 
 class UpdateUserProfileSerializer(serializers.ModelSerializer):
     """
@@ -36,6 +39,8 @@ class FollowingSerializer(serializers.ModelSerializer):
     class Meta:
         model = Followers
         fields = ('profile', 'followed')
+
+
 class UserListSerializer(serializers.ModelSerializer):
     """
     Serializer class for getting user profile
