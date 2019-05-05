@@ -83,9 +83,11 @@ class RegistrationSerializer(serializers.ModelSerializer):
 
 
 class LoginSerializer(serializers.Serializer):
-    email = serializers.CharField(max_length=255)
+    email = serializers.CharField(
+        max_length=255, allow_blank=True)
     username = serializers.CharField(max_length=255, read_only=True)
-    password = serializers.CharField(max_length=128, write_only=True)
+    password = serializers.CharField(
+        max_length=128, write_only=True, allow_blank=True)
     token = serializers.CharField(max_length=255, read_only=True)
 
     def validate(self, data):
@@ -99,16 +101,25 @@ class LoginSerializer(serializers.Serializer):
 
         # As mentioned above, an email is required. Raise an exception if an
         # email is not provided.
-        if email is None:
-            raise serializers.ValidationError(
-                'An email address is required to log in.'
-            )
+        if not email and not password:
+            resp = {
+                'email': 'An email address is required to log in.',
+                'password': 'A password is required to log in.'
+            }
+            raise serializers.ValidationError(resp)
+
+        if not email:
+            resp = {
+                'email': 'An email address is required to log in.'
+            }
+            raise serializers.ValidationError(resp)
         # As mentioned above, a password is required. Raise an exception if a
         # password is not provided.
-        if password is None:
-            raise serializers.ValidationError(
-                'A password is required to log in.'
-            )
+        if not password:
+            resp = {
+                'password': 'A password is required to log in.'
+            }
+            raise serializers.ValidationError(resp)
 
         # The `authenticate` method is provided by Django and handles checking
         # for a user that matches this email/password combination. Notice how
@@ -119,9 +130,10 @@ class LoginSerializer(serializers.Serializer):
         # If no user was found matching this email/password combination then
         # `authenticate` will return `None`. Raise an exception in this case.
         if user is None:
-            raise serializers.ValidationError(
-                'A user with this email and password was not found.'
-            )
+            resp = {
+                'credentials': 'Wrong email or password.'
+            }
+            raise serializers.ValidationError(resp)
 
         # Django provides a flag on our `User` model called `is_active`. The
         # purpose of this flag to tell us whether the user has been banned
