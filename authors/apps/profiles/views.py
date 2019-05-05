@@ -5,7 +5,9 @@ from rest_framework import permissions, status
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from authors.apps.authentication.models import User
-from django.shortcuts import get_object_or_404
+from rest_framework.exceptions import APIException
+import json
+
 
 from .serializers import UserProfileSerializer, UpdateUserProfileSerializer, FollowingSerializer, UserListSerializer
 from .models import Profile, Followers
@@ -83,13 +85,20 @@ class UpdateUserProfileView(GenericAPIView):
         )
 
 
-class FollowAPI(GenericAPIView):
+class UserNotFound(APIException):
+    """exception message"""
+    status_code = 404
+    default_detail = 'User with that username Not found'
 
+
+class FollowAPI(GenericAPIView):
+    """class for follow and unfollow users"""
     permission_classes = (IsAuthenticated,)
     renderer_classes = (FollowersJSONRenderer,)
     serializer_class = FollowingSerializer
 
     def is_following_user(self, profile, followed):
+        """check if a user is following or not"""
         if profile.id == followed.id:
             return Response({
                 'error': 'You can not follow yourself.'
@@ -102,9 +111,12 @@ class FollowAPI(GenericAPIView):
             }, status=status.HTTP_400_BAD_REQUEST)
 
     def post(self, request, username):
-
+        """Follow a certain user"""
         profile = User.objects.get(username=request.user.username)
-        followed = get_object_or_404(User, username=username)
+        try:
+            followed = User.objects.get(username=username)
+        except User.DoesNotExist:
+            raise UserNotFound
 
         verify_follow = self.is_following_user(profile, followed)
         if isinstance(verify_follow, Response):
@@ -121,14 +133,21 @@ class FollowAPI(GenericAPIView):
             "first_name": profile.first_name,
             "last_name": profile.last_name,
             "bio": profile.bio,
+            "following": True,
 
 
         }
         return Response(response, status=status.HTTP_202_ACCEPTED)
 
     def delete(self, request, username):
+        """Unfollow a certain user"""
         profile = User.objects.get(username=request.user.username)
-        followed = get_object_or_404(User, username=username)
+
+        try:
+            followed = User.objects.get(username=username)
+        except User.DoesNotExist:
+            raise UserNotFound
+
         follow = Followers.objects.filter(
             profile_id=profile.id, followed_id=followed.profile.id).first()
         if not follow:
@@ -142,13 +161,16 @@ class FollowAPI(GenericAPIView):
             "first_name": profile.first_name,
             "last_name": profile.last_name,
             "bio": profile.bio,
-
+            "following": False,
         }
         return Response(response, status=status.HTTP_202_ACCEPTED)
 
     def get(self, request, username):
         """get all users a user is following"""
-        user = get_object_or_404(User, username=username)
+        try:
+            user = User.objects.get(username=username)
+        except User.DoesNotExist:
+            raise UserNotFound
         follows = Followers.objects.filter(profile_id=user.id)
         serializer = self.serializer_class(follows, many=True)
         profiles = []
@@ -159,6 +181,7 @@ class FollowAPI(GenericAPIView):
                 "first_name": profile.first_name,
                 "last_name": profile.last_name,
                 "bio": profile.bio,
+                "following": True,
             })
         if not profiles:
             response = {'message': '{} has no followings yet'.format(username)}
@@ -169,14 +192,18 @@ class FollowAPI(GenericAPIView):
 
 
 class FollowersAPI(GenericAPIView):
+    """class for get all followings"""
     permission_classes = (IsAuthenticated,)
     renderer_classes = (FollowersJSONRenderer,)
     serializer_class = FollowingSerializer
 
     def get(self, request, username):
         """ Get all Users following a user """
+        try:
+            user = User.objects.get(username=username)
+        except User.DoesNotExist:
+            raise UserNotFound
 
-        user = get_object_or_404(User, username=username)
         followers = Followers.objects.filter(profile_id=user.id)
         serializer = self.serializer_class(followers, many=True)
         profiles = []
@@ -188,6 +215,8 @@ class FollowersAPI(GenericAPIView):
                 "first_name": profile.first_name,
                 "last_name": profile.last_name,
                 "bio": profile.bio,
+                "following": True,
+
             })
         if not profiles:
             response = {

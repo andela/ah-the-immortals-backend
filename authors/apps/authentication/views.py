@@ -31,6 +31,9 @@ User = get_user_model()
 
 
 class RegistrationAPIView(GenericAPIView):
+    """
+    Endpoint to signup a user
+    """
     # Allow any user (authenticated or not) to hit this endpoint.
     permission_classes = (AllowAny,)
     renderer_classes = (SignupUserJSONRenderer,)
@@ -58,11 +61,15 @@ class RegistrationAPIView(GenericAPIView):
 
 
 class LoginAPIView(GenericAPIView):
+    """
+    Endpoint to login a user
+    """
     permission_classes = (AllowAny,)
     renderer_classes = (UserJSONRenderer,)
     serializer_class = LoginSerializer
 
     def post(self, request):
+        """Login a User"""
         user = request.data.get('user', {})
 
         # Notice here that we do not call `serializer.save()` like we did for
@@ -75,6 +82,9 @@ class LoginAPIView(GenericAPIView):
 
 
 class UserRetrieveUpdateAPIView(RetrieveUpdateAPIView):
+    """
+    Endpoint to Retrieve and update users
+    """
     permission_classes = (IsAuthenticated,)
     renderer_classes = (UserJSONRenderer,)
     serializer_class = UserSerializer
@@ -200,7 +210,9 @@ class PasswordResetConfirmView(GenericAPIView):
 
 
 class SignupEmailVerificationView(GenericAPIView):
-    """ Verification of email """
+    """ 
+    Verification of email 
+    """
 
     def get(self, request, token):
 
