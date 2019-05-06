@@ -2,6 +2,7 @@
 
 [![Build Status](https://travis-ci.org/andela/ah-the-immortals-backend.svg?branch=develop)](https://travis-ci.org/andela/ah-the-immortals-backend)
 [![Coverage Status](https://coveralls.io/repos/github/andela/ah-the-immortals-backend/badge.svg?branch=develop)](https://coveralls.io/github/andela/ah-the-immortals-backend?branch=develop)
+[![Maintainability](https://api.codeclimate.com/v1/badges/a61d851f2a0c0e07d1ac/maintainability)](https://codeclimate.com/github/andela/ah-the-immortals-backend/maintainability)
 
 ## Vision
 
