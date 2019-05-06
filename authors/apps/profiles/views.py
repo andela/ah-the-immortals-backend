@@ -7,7 +7,7 @@ from rest_framework.permissions import IsAuthenticated
 from authors.apps.authentication.models import User
 from django.shortcuts import get_object_or_404
 
-from .serializers import UserProfileSerializer, UpdateUserProfileSerializer, FollowingSerializer, UserListSerializer
+from .serializers import UserProfileSerializer, UpdateUserProfileSerializer, FollowingSerializer
 from .models import Profile, Followers
 from .renderers import FollowersJSONRenderer
 
@@ -202,11 +202,10 @@ class UserListView(GenericAPIView):
     """
     A class for getting all user profiles
     """
-    permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
         queryset = Profile.objects.all()
-        serializer = UserListSerializer(queryset, many=True)
+        serializer = UserProfileSerializer(queryset, many=True)
         return Response({
             'profiles': serializer.data
         }, status=status.HTTP_200_OK)
