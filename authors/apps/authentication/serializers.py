@@ -142,10 +142,6 @@ class LoginSerializer(serializers.Serializer):
             raise serializers.ValidationError(
                 'This user has been deactivated.'
             )
-        if not user.is_verified:
-            raise serializers.ValidationError(
-                'This user has not been verified'
-            )
 
         # The `validate` method should return a dictionary of validated data.
         # This is the data that is passed to the `create` and `update` methods
