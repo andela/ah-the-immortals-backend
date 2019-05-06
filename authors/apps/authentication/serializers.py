@@ -8,12 +8,12 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.utils import timezone
 from rest_framework.authtoken.models import Token
 from django.contrib.auth.password_validation import validate_password
-from password_strength import PasswordStats
+from authors.utils.password_validators import get_password_policy_errors
 
 
 class RegistrationSerializer(serializers.ModelSerializer):
     """Serializers registration requests and creates a new user."""
-    
+
     email = serializers.EmailField(
         validators=[
             UniqueValidator(
@@ -21,7 +21,7 @@ class RegistrationSerializer(serializers.ModelSerializer):
                 message='user with this email already exists'
             )
         ]
- )
+    )
     # Ensure passwords are at least 8 characters long, no longer than 30
     # Password has no spaces
     password = serializers.CharField(
@@ -33,42 +33,10 @@ class RegistrationSerializer(serializers.ModelSerializer):
     )
 
     def validate_password(self, value):
-        self.get_password_policy_errors(value)
-        return value
-
-    def get_password_policy_errors(self, password):
-        """
-        Method to captures password policy errors
-        """
-        stats = PasswordStats(password)
-        errors = []
-        if stats.letters_uppercase < 2:
-            errors.append(
-                "password should have at least 2 uppercase letters")
-
-        if stats.letters_lowercase < 3:
-            errors.append("password should have at least 3 lowercase letters")
-
-        if stats.numbers < 2:
-            errors.append("password should have at least 2 digits")
-
-        if stats.special_characters < 1:
-            errors.append("password should have at least 1 special character")
-
-        self.get_repeating_password(stats, errors)
+        errors = get_password_policy_errors(value)
         if errors:
             raise serializers.ValidationError(errors)
-
-    def get_repeating_password(self, stats, errors):
-        """
-        Check for password repetition and sequence 
-        """
-        if stats.sequences_length > 2:
-            errors.append("password should not have a repeating sequence")
-
-        if stats.repeated_patterns_length > 2:
-            errors.append("password should not have a repeating characters")
-
+        return value
 
     # Username should be unique
     # Username should not have spaces or special characters
@@ -282,10 +250,10 @@ class PasswordResetSerializer(serializers.Serializer):
             raise serializers.ValidationError({
                 "email": "Please provide your email address"
             })
-        try:
-            EmailValidator(email)
-        except ValidationError as e:
-            raise serializers.ValidationError(e)
+        if not EmailValidator(email):
+            raise serializers.ValidationError({
+                "email": "Enter a valid email address."
+            })
         try:
             User.objects.get(email=email)
         except ObjectDoesNotExist:
@@ -343,35 +311,12 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
             raise serializers.ValidationError({
                 "password": list(error)
             })
-        self.get_password_policy_rrors(data.get("password"))
-        return data
-
-    def get_password_policy_rrors(self, password):
-        """
-        Captures password policy errors
-        """
-        stats = PasswordStats(password)
-        password_errors = []
-        if stats.letters_uppercase < 2:
-            password_errors.append(
-                "Your password should have a minimum of 2 uppercase letters"
-            )
-        if stats.numbers < 2:
-            password_errors.append(
-                "Your password should have a minimum of 2  numbers"
-            )
-        if stats.special_characters < 1:
-            password_errors.append(
-                "Your password should have a minimum of 1 special character"
-            )
-        elif stats.letters_lowercase < 3:
-            password_errors.append(
-                "Your password should have a minimum of 3 lowercase letters"
-            )
+        password_errors = get_password_policy_errors(data.get("password"))
         if password_errors:
             raise serializers.ValidationError({
                 "password": list(password_errors)
             })
+        return data
 
     def get_password_field_erros(self, data):
         """

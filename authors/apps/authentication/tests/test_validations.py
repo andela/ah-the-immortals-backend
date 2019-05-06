@@ -82,7 +82,7 @@ class TestValidations(BaseTest):
         self.assertEqual(
             errors['password'][2], "password should have at least 2 digits")
         self.assertEqual(
-            errors['password'][3], "password should not have a repeating characters")
+            errors['password'][3], "password should not have a repeating patterns")
 
     def test_password_with_no_special_character(self):
         """
@@ -102,7 +102,7 @@ class TestValidations(BaseTest):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         errors = response.data['errors']
         self.assertEqual(
-            errors['password'][0], "password should not have a repeating characters")
+            errors['password'][0], "password should not have a repeating patterns")
 
     def test_password_with_repeating_sequence(self):
         """

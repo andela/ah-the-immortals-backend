@@ -87,7 +87,7 @@ class TestPasswordReset(PasswordResetBaseTest):
         )
         self.assertEqual(
             response.data.get("data")[0].get("message"),
-            "A password reset message was sent to your email address. Please click the link in that message to reset your password"
+            "A password reset link has been sent to your email"
         )
 
     def test_unexisting_ccount(self):
@@ -279,7 +279,7 @@ class TestPasswordReset(PasswordResetBaseTest):
         self.assertEqual(
             self.contains_error(
                 response.data.get("errors").get("password"),
-                "Your password should have a minimum of 2 uppercase letters"
+                "password should have at least 2 uppercase letters"
             ), True
         )
 
@@ -298,7 +298,7 @@ class TestPasswordReset(PasswordResetBaseTest):
         self.assertEqual(
             self.contains_error(
                 response.data.get("errors").get("password"),
-                "Your password should have a minimum of 2  numbers"
+                "password should have at least 2 digits"
             ), True
         )
 
@@ -317,7 +317,7 @@ class TestPasswordReset(PasswordResetBaseTest):
         self.assertEqual(
             self.contains_error(
                 response.data.get("errors").get("password"),
-                "Your password should have a minimum of 1 special character"
+                "password should have at least 1 special character"
             ), True
         )
 
@@ -336,7 +336,7 @@ class TestPasswordReset(PasswordResetBaseTest):
         self.assertEqual(
             self.contains_error(
                 response.data.get("errors").get("password"),
-                "Your password should have a minimum of 3 lowercase letters"
+                "password should have at least 3 lowercase letters"
             ), True
         )
 
@@ -437,4 +437,42 @@ class TestPasswordReset(PasswordResetBaseTest):
         self.assertEqual(
             message,
             "You have successfully reset your password"
+        )
+
+    def test_repeated_password_pattern(self):
+        """
+        Tests repeating a pattern more than once
+        """
+        self.password_data["password"] = "12aaBBk@kz"
+        self.password_data["password_confirm"] = "12aaBBk@kz"
+        self.password_reset()
+        response = self.password_reset_confirm()
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_400_BAD_REQUEST
+        )
+        self.assertEqual(
+            self.contains_error(
+                response.data.get("errors").get("password"),
+                "password should not have a repeating patterns"
+            ), True
+        )
+
+    def test_repeated_password_sequence(self):
+        """
+        Tests password with repeated sequence of more than two
+        """
+        self.password_data["password"] = "123aaDK@kz"
+        self.password_data["password_confirm"] = "123aaDK@kz"
+        self.password_reset()
+        response = self.password_reset_confirm()
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_400_BAD_REQUEST
+        )
+        self.assertEqual(
+            self.contains_error(
+                response.data.get("errors").get("password"),
+                "password should not have a repeating sequence"
+            ), True
         )

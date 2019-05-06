@@ -180,7 +180,7 @@ class PasswordResetView(GenericAPIView):
         VerificationMail(user, token).send_mail()
         response = Response(
             data={"data": [{
-                "message": "A password reset message was sent to your email address. Please click the link in that message to reset your password"
+                "message": "A password reset link has been sent to your email"
             }]},
             status=status.HTTP_200_OK
         )
