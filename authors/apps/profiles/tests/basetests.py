@@ -46,10 +46,8 @@ class BaseTest(APITestCase):
         return self.client.post(
             self.login_url,
             data=json.dumps({
-                "user": {
-                    "email": email,
-                    "password": password
-                }
+                "email": email,
+                "password": password
             }),
             content_type="application/json"
         )

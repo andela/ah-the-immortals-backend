@@ -31,13 +31,16 @@ User = get_user_model()
 
 
 class RegistrationAPIView(GenericAPIView):
+    """
+    signup a user
+    """
     # Allow any user (authenticated or not) to hit this endpoint.
     permission_classes = (AllowAny,)
     renderer_classes = (SignupUserJSONRenderer,)
     serializer_class = RegistrationSerializer
 
     def post(self, request):
-        user = request.data.get('user', {})
+        user = request.data
 
         # The create serializer, validate serializer, save serializer pattern
         # below is common and you will see it a lot throughout this course and
@@ -58,12 +61,15 @@ class RegistrationAPIView(GenericAPIView):
 
 
 class LoginAPIView(GenericAPIView):
+    """
+    login a user
+    """
     permission_classes = (AllowAny,)
     renderer_classes = (UserJSONRenderer,)
     serializer_class = LoginSerializer
 
     def post(self, request):
-        user = request.data.get('user', {})
+        user = request.data
 
         # Notice here that we do not call `serializer.save()` like we did for
         # the registration endpoint. This is because we don't actually have
@@ -75,11 +81,17 @@ class LoginAPIView(GenericAPIView):
 
 
 class UserRetrieveUpdateAPIView(RetrieveUpdateAPIView):
+    """
+    Retrieve and update users
+    """
     permission_classes = (IsAuthenticated,)
     renderer_classes = (UserJSONRenderer,)
     serializer_class = UserSerializer
 
     def retrieve(self, request, *args, **kwargs):
+        """
+        Get the currently login user
+        """
         # There is nothing to validate or save here. Instead, we just want the
         # serializer to handle turning our `User` object into something that
         # can be JSONified and sent to the client.
@@ -88,7 +100,10 @@ class UserRetrieveUpdateAPIView(RetrieveUpdateAPIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def update(self, request, *args, **kwargs):
-        serializer_data = request.data.get('user', {})
+        """
+        update users
+        """
+        serializer_data = request.data
 
         # Here is that serialize, validate, save pattern we talked about
         # before.
@@ -149,7 +164,7 @@ class PasswordResetView(GenericAPIView):
     serializer_class = PasswordResetSerializer
 
     def post(self, request):
-        data = request.data.get("user")
+        data = request.data
         serializer = self.serializer_class(data=data)
         serializer.is_valid(raise_exception=True)
         email = data.get("email")
