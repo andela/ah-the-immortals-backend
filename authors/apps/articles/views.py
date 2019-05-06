@@ -5,7 +5,11 @@ from rest_framework import status
 from .exceptions import ArticleNotFound
 from rest_framework.permissions import IsAuthenticatedOrReadOnly, AllowAny
 from .models import Article, Tag
-from .serializers import ArticleSerializer, add_tag_list
+from .serializers import (
+    ArticleSerializer,
+    add_tag_list,
+    ArticlePaginator
+)
 
 
 class ListCreateArticleAPIView(ListCreateAPIView):
@@ -39,11 +43,18 @@ class ListCreateArticleAPIView(ListCreateAPIView):
         """
         Get all articles
         """
+        page_limit = request.GET.get('page_limit')
+        if not page_limit:
+            page_limit = 10
         articles = Article.objects.all()
-        serializer = ArticleSerializer(articles, many=True)
-        return Response({"articles": serializer.data,
-                         "articlesCount": len(serializer.data)}
-                        )
+        paginator = ArticlePaginator()
+        paginator.page_size = page_limit
+        result = paginator.paginate_queryset(articles, request)
+        serializer = ArticleSerializer(result, many=True)
+        response = paginator.get_paginated_response({
+            "articles": serializer.data
+        })
+        return response
 
 
 class RetrieveUpdateArticleAPIView(GenericAPIView):

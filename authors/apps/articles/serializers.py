@@ -2,6 +2,9 @@ from rest_framework import serializers
 from .models import Article
 import json
 from authors.apps.articles.models import Tag
+from rest_framework.pagination import PageNumberPagination
+from collections import OrderedDict
+from rest_framework.response import Response
 
 
 class ArticleSerializer(serializers.ModelSerializer):
@@ -28,3 +31,17 @@ def add_tag_list(tag_names, article):
                 tag_name=name
             )
             article.tags.add(tag)
+
+
+class ArticlePaginator(PageNumberPagination):
+    """
+    Custom pagination for Articles
+    """
+
+    def get_paginated_response(self, data):
+        return Response(OrderedDict([
+            ('articlesCount', self.page.paginator.count),
+            ('next', self.get_next_link()),
+            ('previous', self.get_previous_link()),
+            ('results', data)
+        ]))
