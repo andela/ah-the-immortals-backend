@@ -21,8 +21,7 @@ class TestArticles(BaseTest):
         """
         response = self.create_article()
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(response.data.get("article").get("slug"),
-                         self.slug)
+        self.assertEqual(response.data.get("slug"), self.slug)
 
     def test_successful_get_all_articles(self):
         """
