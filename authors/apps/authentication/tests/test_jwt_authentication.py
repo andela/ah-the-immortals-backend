@@ -64,17 +64,6 @@ class TestTokenAuthentication(BaseTest):
             'Your account is not active!')
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
-    def test_unverified_user(self):
-        self.signup_user('Mariga', 'mariga@betin.com', 'Maina9176')
-        token = self.generate_jwt_token('mariga@betin.com', 'Mariga')
-        self.client.credentials(
-            HTTP_AUTHORIZATION='Bearer ' + token)
-        response = self.client.get(self.get_url)
-        self.assertEqual(
-            response.data['detail'],
-            'This user has not been verified')
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
-
     def test_user_not_found_from_token(self):
         token = self.generate_jwt_token('ianmwangi@gmail.com', 'ianmaina')
         self.client.credentials(
@@ -93,4 +82,10 @@ class TestTokenAuthentication(BaseTest):
         self.assertEqual(
             response.data['detail'],
             'The token used has expired. Please authenticate again!')
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_unverified_user(self):
+        self.signup_user('Mariga', 'mariga@betin.com', 'HDello14#')
+        response = self.client.patch(self.update_url)
+
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
