@@ -144,7 +144,50 @@ class BaseTest(APITestCase):
         """
         self.other_user
         return self.client.delete(self.articles_url)
+    
+    def like_dislike_article(self, vote_type):
+        """
+        Like an article
+        """
+        slug = str(self.article.slug)
+        url = reverse("articles:likes", args=[slug, vote_type])
+        return self.client.post(
+            url,
+            content_type="application/json"
+        )
 
+    def like_dislike_article_noslug(self, vote_type):
+        """
+        Like an article
+        """
+        slug = "ilove-this"
+        url = reverse("articles:likes", args=[slug, vote_type])
+        return self.client.post(
+            url,
+            content_type="application/json"
+        )
+
+    def delete_like_dislike(self, vote_type):
+        """
+        Like and Unlike
+        """
+        slug = str(self.article.slug)
+        url = reverse("articles:likes", args=[slug, vote_type])
+        return self.client.delete(
+            url,
+            content_type="application/json"
+        )
+
+    def delete_like_dislike_noslug(self, vote_type):
+        """
+        Delete while slug is wrong
+        """
+        slug = "i-love-this"
+        url = reverse("articles:likes", args=[slug, vote_type])
+        return self.client.delete(
+            url,
+            content_type="application/json"
+        )
 
 class TagsBaseTest(APITestCase):
     """

@@ -30,6 +30,9 @@ class Migration(migrations.Migration):
             name='Article',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('vote_score', models.IntegerField(db_index=True, default=0)),
+                ('num_vote_up', models.PositiveIntegerField(db_index=True, default=0)),
+                ('num_vote_down', models.PositiveIntegerField(db_index=True, default=0)),
                 ('slug', autoslug.fields.AutoSlugField(always_update=True, blank=True, editable=False, null=True, populate_from='title', unique=True)),
                 ('title', models.CharField(max_length=255)),
                 ('description', models.CharField(max_length=255)),

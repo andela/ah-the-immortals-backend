@@ -3,6 +3,9 @@ from django.contrib.auth import get_user_model
 from autoslug import AutoSlugField
 from cloudinary.models import CloudinaryField
 from cloudinary import CloudinaryImage
+
+from vote.models import VoteModel
+
 from authors.apps.profiles.models import Profile
 import json
 
@@ -30,7 +33,7 @@ class Tag(models.Model):
         return queryset
 
 
-class Article(models.Model):
+class Article(VoteModel, models.Model):
     """
     Model for articles
     """
