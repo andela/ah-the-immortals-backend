@@ -7,10 +7,13 @@ from rest_framework.generics import RetrieveUpdateAPIView, GenericAPIView, Creat
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework import authentication, exceptions
+
 from social_django.utils import load_backend, load_strategy
 from social_core.backends.oauth import BaseOAuth1, BaseOAuth2
 from social_core.exceptions import MissingBackend
-from .renderers import UserJSONRenderer, SignupUserJSONRenderer
+
+from .renderers import UserJSONRenderer
 from .serializers import (
     LoginSerializer, RegistrationSerializer, UserSerializer,
     SocialAuthSerializer,
@@ -26,14 +29,12 @@ from rest_framework.authentication import (
 from authors.utils.mailer import VerificationMail
 from django.utils import timezone
 
-auth = JWTAuthentication()
 User = get_user_model()
 
 
 class RegistrationAPIView(GenericAPIView):
     # Allow any user (authenticated or not) to hit this endpoint.
     permission_classes = (AllowAny,)
-    renderer_classes = (SignupUserJSONRenderer,)
     serializer_class = RegistrationSerializer
 
     def post(self, request):
@@ -48,12 +49,15 @@ class RegistrationAPIView(GenericAPIView):
         serializer.save()
 
         ConfirmationMail(serializer.data).send_mail()
-
         message = {
-            "email": serializer.data['email'],
-            "username": serializer.data['username']
+            "user": {
+                "email": serializer.data.get('email'),
+                "username": serializer.data.get("username"),
+                "token": serializer.data.get("token")
+            },
+            "message": "Account created successfully. +\
+                Kindly check your email to verify your account."
         }
-
         return Response(message, status=status.HTTP_201_CREATED)
 
 
@@ -203,9 +207,19 @@ class SignupEmailVerificationView(GenericAPIView):
     """ Verification of email """
 
     def get(self, request, token):
+        try:
+            user_information = jwt.api_jwt.decode(
+                token, settings.SECRET_KEY, algorithms='HS256')
+        except jwt.api_jwt.DecodeError:
+            raise exceptions.AuthenticationFailed(
+                'Invalid Token. The token provided cannot be decoded!'
+            )
+        except jwt.api_jwt.ExpiredSignatureError:
+            raise exceptions.AuthenticationFailed(
+                'The token used has expired. Please authenticate again!'
+            )
 
-        user_data = auth.authenticate_token(request, token)
-        user_email = user_data[0].email
+        user_email = user_information['user_data']['email']
         user = User.objects.get(email=user_email)
         if user.is_verified:
             return Response({
