@@ -1,5 +1,5 @@
 from .backends import JWTAuthentication
-from ..utils.mailer import ConfirmationMail
+from ...utils.mailer import ConfirmationMail
 import jwt
 from django.conf import settings
 from rest_framework import status

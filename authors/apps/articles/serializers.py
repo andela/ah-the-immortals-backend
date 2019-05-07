@@ -7,7 +7,7 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 
 from authors.apps.articles.models import Tag
-from authors.apps.utils.baseserializer import BaseSerializer
+from authors.utils.baseserializer import BaseSerializer
 
 from .exceptions import ArticleNotFound
 from .models import Article, Comment, Favorite, RatingModel

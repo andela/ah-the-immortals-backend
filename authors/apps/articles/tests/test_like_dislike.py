@@ -34,7 +34,6 @@ class TestLikeDislike(BaseTest):
         """
         self.is_authenticated("adam@gmail.com", "@Us3r.com")
         response = self.like_dislike_article_noslug("like")
-        print(response.data)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(response.data["detail"], "Article does not exist")
 

@@ -1,3 +1,4 @@
+from django.core.exceptions import ObjectDoesNotExist
 from django.shortcuts import get_object_or_404, render
 from rest_framework import permissions, status
 from rest_framework.exceptions import APIException, ValidationError
@@ -5,6 +6,7 @@ from rest_framework.generics import GenericAPIView, ListCreateAPIView
 from rest_framework.permissions import (AllowAny, IsAuthenticated,
                                         IsAuthenticatedOrReadOnly)
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from .exceptions import ArticleNotFound, Forbidden, ItemDoesNotExist
 from .models import Article, Comment, Favorite, RatingModel, Tag
@@ -409,7 +411,7 @@ class CommentAPIView(GenericAPIView):
         try:
             slug = self.kwargs['slug']
             article = Article.objects.get(slug=slug)
-
+            request.POST._mutable = True
             author = request.user
             comment['author'] = author.id
             comment['article'] = article.id
@@ -464,7 +466,7 @@ class CommentDetailAPIView(GenericAPIView):
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def put(self, request, *args, **kwargs):
-        """ 
+        """
         update a comment
         """
         comment = request.data
@@ -494,7 +496,7 @@ class CommentDetailAPIView(GenericAPIView):
 
     def delete(self, request, **kwargs):
         """
-        delete a comment 
+        delete a comment
         """
         try:
             comment_obj = Comment.objects.get(id=kwargs['id'])

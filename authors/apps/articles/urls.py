@@ -10,7 +10,12 @@ app_name = 'articles'
 
 urlpatterns = [
     path('articles/', ListCreateArticleAPIView.as_view(), name='article'),
-    path('articles/<slug>', RetrieveUpdateArticleAPIView.as_view(),
+    path('tags/', FetchTags.as_view(), name="all_tags"),
+    path('articles/<slug>/comments/',
+         CommentAPIView.as_view(), name='comment'),
+    path('articles/<slug>/comments/<id>/',
+         CommentDetailAPIView.as_view(), name='commentdetail'),
+    path('articles/<slug>/', RetrieveUpdateArticleAPIView.as_view(),
          name='articles'),
     path('tags/', FetchTags.as_view(), name="all_tags"),
     path('articles/<str:slug>/<str:vote_type>/vote/',
