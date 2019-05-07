@@ -23,9 +23,11 @@ authurls = include(('authors.apps.authentication.urls',
                     'authentication'), namespace='authentication')
 profileurls = include(('authors.apps.profiles.urls',
                        'profiles'), namespace='profile')
+articleurls = include(('authors.apps.articles.urls', 'articles'), namespace='article')
 urlpatterns = [
     path('admin/', admin.site.urls),
     url(r'^api/', authurls),
     path('', schema_view),
     path('api/', profileurls),
+    path('api/', articleurls),
 ]
