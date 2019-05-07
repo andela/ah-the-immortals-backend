@@ -99,3 +99,5 @@ db.sqlite3
 
 # vscode
 .vscode/
+# migrations
+migrations/

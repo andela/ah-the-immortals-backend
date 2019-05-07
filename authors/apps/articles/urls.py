@@ -6,6 +6,8 @@ from .views import (CommentAPIView, CommentDetailAPIView, FavoritesView,
                     ListUserFavoriteArticlesView, RateArticleAPIView,
                     RetrieveUpdateArticleAPIView)
 
+# from .filters import FilterArticlesView
+
 app_name = 'articles'
 
 urlpatterns = [
@@ -17,7 +19,6 @@ urlpatterns = [
          CommentDetailAPIView.as_view(), name='commentdetail'),
     path('articles/<slug>/', RetrieveUpdateArticleAPIView.as_view(),
          name='articles'),
-    path('tags/', FetchTags.as_view(), name="all_tags"),
     path('articles/<str:slug>/<str:vote_type>/vote/',
          LikeDislikeView.as_view(), name='likes'),
     path('articles/<str:slug>/favorite/',
@@ -26,8 +27,4 @@ urlpatterns = [
          ListUserFavoriteArticlesView.as_view(), name='get_favorite'),
     path('articles/<slug>/rate/',
          RateArticleAPIView.as_view(), name='rating_articles'),
-    path('articles/<slug>/comments/',
-         CommentAPIView.as_view(), name='comment'),
-    path('articles/<slug>/comments/<id>/',
-         CommentDetailAPIView.as_view(), name='commentdetail')
 ]
