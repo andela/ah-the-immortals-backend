@@ -17,6 +17,8 @@ from django.conf.urls import url, include
 from django.urls import path
 from django.contrib import admin
 from rest_framework_swagger.views import get_swagger_view
+from django.views.generic.base import RedirectView
+from django.conf import settings
 
 schema_view = get_swagger_view(title="The Immortals Api Swagger Docs")
 authurls = include(('authors.apps.authentication.urls',
@@ -26,6 +28,7 @@ profileurls = include(('authors.apps.profiles.urls',
 urlpatterns = [
     path('admin/', admin.site.urls),
     url(r'^api/', authurls),
-    path('', schema_view),
+    path('api/swagger/', schema_view),
     path('api/', profileurls),
+    path('', RedirectView.as_view(url=settings.DOMAIN+'/api/swagger/')),
 ]
