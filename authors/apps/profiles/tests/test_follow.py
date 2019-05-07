@@ -22,10 +22,7 @@ class TestFollowUsers(APITestCase):
     def save_user(self, username, email, password):
         data = {'username': username,
                 'email': email, 'password': password}
-        res = User.objects.create_user(**data)
-        res.is_verified = True
-        res.save()
-        return res
+        return User.objects.create_user(**data)
 
     def get_user_object(self, username='ironman',
                         email='ironman@gmail.com', password='passworddude'):

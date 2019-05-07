@@ -62,9 +62,4 @@ class JWTAuthentication(authentication.BaseAuthentication):
             resp = 'Your account is not active!'
             raise exceptions.AuthenticationFailed(resp)
 
-        if not user.is_verified:
-            raise exceptions.AuthenticationFailed(
-                'This user has not been verified'
-            )
-
         return user, token

@@ -25,7 +25,7 @@ class BaseTest(APITestCase):
         self.register_url = reverse("authentication:registration")
         self.update_url = reverse("authentication:update_get")
         self.get_url = reverse("authentication:update_get")
-        self.verification_of_user = "/api/users/activate/"
+        # self.verification_of_user = reverse("authentication:signup_verification")
         self.user = User.objects.create_user(
             username="adam",
             email="adam@gmail.com",

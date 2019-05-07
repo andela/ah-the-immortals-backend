@@ -3,7 +3,7 @@ from django.core.exceptions import ValidationError
 from rest_framework.generics import GenericAPIView
 from rest_framework import permissions, status
 from rest_framework.response import Response
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.permissions import IsAuthenticated
 from authors.apps.authentication.models import User
 from django.shortcuts import get_object_or_404
 
@@ -16,7 +16,7 @@ class UserProfileView(GenericAPIView):
     """
     A class for getting user profile
     """
-    permission_classes = (AllowAny,)
+    permission_classes = [permissions.IsAuthenticated]
     serializer_class = UserProfileSerializer
 
     def get(self, request, username):
@@ -148,7 +148,6 @@ class FollowAPI(GenericAPIView):
 
     def get(self, request, username):
         """get all users a user is following"""
-        self.permission_classes = (AllowAny,)
         user = get_object_or_404(User, username=username)
         follows = Followers.objects.filter(profile_id=user.id)
         serializer = self.serializer_class(follows, many=True)
@@ -170,7 +169,7 @@ class FollowAPI(GenericAPIView):
 
 
 class FollowersAPI(GenericAPIView):
-    permission_classes = (AllowAny,)
+    permission_classes = (IsAuthenticated,)
     renderer_classes = (FollowersJSONRenderer,)
     serializer_class = FollowingSerializer
 
@@ -203,7 +202,6 @@ class UserListView(GenericAPIView):
     """
     A class for getting all user profiles
     """
-    permission_classes = (AllowAny,)
 
     def get(self, request):
         queryset = Profile.objects.all()
