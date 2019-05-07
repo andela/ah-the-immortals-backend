@@ -389,12 +389,10 @@ Example request body:
 
 ```source-json
 {
-  "article": {
     "title": "How to train your dragon",
     "description": "Ever wonder how?",
     "body": "You have to believe",
     "tagList": ["reactjs", "angularjs", "dragons"]
-  }
 }
 ```
 
@@ -412,9 +410,7 @@ Example request body:
 
 ```source-json
 {
-  "article": {
     "title": "Did you train your dragon?"
-  }
 }
 ```
 
