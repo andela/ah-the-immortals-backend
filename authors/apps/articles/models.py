@@ -47,6 +47,8 @@ class Article(VoteModel, models.Model):
     author = models.ForeignKey(User, on_delete=models.CASCADE)
     image = CloudinaryField('image')
     tags = models.ManyToManyField(Tag)
+    favorited = models.BooleanField(default=False)
+    favoritesCount = models.PositiveSmallIntegerField(default=0)
 
     class Meta:
         ordering = ['created_at', ]
@@ -85,3 +87,17 @@ class Article(VoteModel, models.Model):
             self.tags.remove(tag)
             if not tag.articles:
                 tag.delete()
+        [self.tags.remove(tag) for tag in self.tags.all()]
+
+    def get_favorited(self):
+        favorite = self.favorited
+        favorite = True
+        return favorite
+
+
+class Favorite(models.Model):
+    """
+    A class model for storing user fovorites and articles
+    """
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    article = models.ForeignKey(Article, on_delete=models.CASCADE)

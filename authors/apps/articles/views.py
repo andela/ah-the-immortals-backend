@@ -2,14 +2,16 @@ from rest_framework.exceptions import APIException
 from rest_framework.generics import ListCreateAPIView, GenericAPIView
 from rest_framework.response import Response
 from rest_framework import status, permissions
-
 from .exceptions import ArticleNotFound
 from rest_framework.permissions import IsAuthenticatedOrReadOnly, AllowAny
-from .models import Article, Tag
+
+from .models import Article, Tag, Favorite
 from .serializers import (
     ArticleSerializer,
     add_tag_list,
-    ArticlePaginator
+    ArticlePaginator,
+    FavoritedArticlesSerializer,
+    FavoritesSerializer
 )
 
 
@@ -253,3 +255,90 @@ class LikeDislikeView(GenericAPIView):
                 'error': 'You have not liked/disliked this article'
             }
         }, status=status.HTTP_404_NOT_FOUND)
+
+
+class FavoritesView(GenericAPIView):
+    """
+    A class for posting favourite articles
+    """
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = FavoritesSerializer
+
+    def post(self, request, slug):
+        """
+        A method to favorite an article
+        """
+        data = request.data
+        article_inst = RetrieveUpdateArticleAPIView()
+        article = article_inst.retrieve_article(slug)
+        favorite_count = article.favoritesCount
+        user = request.user
+        favorite = Favorite.objects.filter(user=user, article=article)
+        if favorite:
+            response = Response({
+                'errors': {
+                    'exist': ['Already favorited this article']
+                }
+            }, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            Article.objects.filter(slug=slug).update(
+                favoritesCount=favorite_count + 1)
+            data['article'] = article.id
+            data['user'] = request.user.id
+            serializer = FavoritesSerializer(data=data)
+            serializer.is_valid()
+            serializer.save()
+            article_id = serializer.data.get("article")
+            article = Article.objects.get(id=article_id)
+            article_serializer = FavoritedArticlesSerializer(article).data
+            response = Response({
+                "article": article_serializer,
+                "message": "Article added to favorites"
+            }, status=status.HTTP_201_CREATED)
+
+        return response
+
+    def delete(self, request, slug):
+        """
+        A method to unfavorite an article
+        """
+        article_inst = RetrieveUpdateArticleAPIView()
+        article = article_inst.retrieve_article(slug)
+
+        favorite_count = article.favoritesCount
+        favorite = Favorite.objects.filter(
+            user=request.user.id, article=article)
+        if favorite:
+            favorite.delete()
+            Article.objects.filter(slug=slug).update(
+                favoritesCount=favorite_count-1)
+            return Response({
+                "message": "Article removed from favorites"
+            }, status=status.HTTP_200_OK)
+        return Response({
+            'errors': {
+                'exist': ['You have not favorited this article']
+            }
+        }, status=status.HTTP_404_NOT_FOUND)
+
+
+class ListUserFavoriteArticlesView(GenericAPIView):
+    """
+    Create Articles CRUD
+    """
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = FavoritedArticlesSerializer
+
+    def get(self, request):
+        favorites = Favorite.objects.filter(
+            user_id=request.user.id)
+
+        user_favorites = []
+        for favorite in favorites:
+            article = FavoritedArticlesSerializer(favorite.article).data
+            user_favorites.append(article)
+
+        return Response(
+            data={"favorites": user_favorites},
+            status=status.HTTP_200_OK
+        )
