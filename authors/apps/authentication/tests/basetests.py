@@ -29,7 +29,7 @@ class BaseTest(APITestCase):
         self.user = User.objects.create_user(
             username="adam",
             email="adam@gmail.com",
-            password="@Us3r.com",
+            password="@Us3r.co3mW",
         )
         self.user.is_verified = True
         self.user.save()
@@ -37,7 +37,7 @@ class BaseTest(APITestCase):
         self.user1 = User.objects.create_user(
             username="ian",
             email="ian@gmail.com",
-            password="Maina9176",
+            password="@Us3r.co3mW",
         )
         self.user1.is_verified = True
         self.user1 = User.objects.get(username='ian')
@@ -47,19 +47,19 @@ class BaseTest(APITestCase):
         self.user2 = User.objects.create_user(
             username="theonly",
             email="ianissa@gmail.com",
-            password="Maina9176",
+            password="@Us3r.co3mW",
         )
 
         self.user3 = User.objects.create_user(
             username="Escobar",
             email="pablo@escobar.com",
-            password="Maina9176",
+            password="@Us3r.co3mW",
         )
 
         self.user4 = User.objects.create_user(
             username="Elchapo",
             email="el@chapo.com",
-            password="Maina9176",
+            password="@Us3r.co3mW",
         )
 
         self.user4.is_verified = True

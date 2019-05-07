@@ -32,21 +32,21 @@ class TestUserSignup(BaseTest):
         """
         Test user signup with the correct credentials
         """
-        response = self.signup_user("eve", "eve@gmail.com", "@Us3r.com")
+        response = self.signup_user("eve", "eve@gmail.com", "@Us3r.co3mW")
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
     def test_signup_without_value(self):
         """
         Test user signup with the missing value credentials
         """
-        response = self.signup_user("", "eve@gmail.com", "@Us3r.com")
+        response = self.signup_user("", "eve@gmail.com", "@Us3r.co3mW")
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_signup_with_invalid_value(self):
         """
         Test user signup with invalid value credentials
         """
-        response = self.signup_user("evegirl", "evegmail.com", "@Us3r.com")
+        response = self.signup_user("evegirl", "evegmail.com", "@Us3r.co3mW")
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
         response = self.signup_user("evegirl", "eve@gmail.com", "@Us")
@@ -56,7 +56,7 @@ class TestUserSignup(BaseTest):
         """
         Test user signup with credentials that exist
         """
-        response = self.signup_user("adam", "adam@gmail.com", "@Us3r.com")
+        response = self.signup_user("adam", "adam@gmail.com", "@Us3r.co3mW")
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_signup_without_key(self):
@@ -64,7 +64,7 @@ class TestUserSignup(BaseTest):
         Test user signup with the missing keys
         """
         response = self.signup_user_with_missing_key(
-            "eve@gmail.com", "@Us3r.com")
+            "eve@gmail.com", "@Us3r.co3mW")
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
 
@@ -78,7 +78,7 @@ class TestUserLogin(BaseTest):
         """
         Test user login with the correct credentials
         """
-        response = self.login_user("adam@gmail.com", "@Us3r.com")
+        response = self.login_user("adam@gmail.com", "@Us3r.co3mW")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn('token', str(response.data))
 
@@ -86,7 +86,7 @@ class TestUserLogin(BaseTest):
         """
         Test user login with the incorrect credentials
         """
-        response = self.login_user("dam@gmail.com", "@Us3r.com")
+        response = self.login_user("dam@gmail.com", "@Us3r.co3mW")
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data['errors']['credentials'][0], 'Wrong email or password.')
 
@@ -94,7 +94,7 @@ class TestUserLogin(BaseTest):
         """
         Test user login with the incorrect credentials
         """
-        response = self.login_user("", "@Us3r.com")
+        response = self.login_user("", "@Us3r.co3mW")
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data['errors']['email'][0], 'An email address is required to log in.')
 
@@ -127,15 +127,15 @@ class TestUserUpdate(BaseTest):
         """
         Test user update with the correct credentials
         """
-        self.authenticate_user("adam@gmail.com", "@Us3r.com")
-        response = self.update_user("admin1", "adam@gmail.com", "@Us3r.com")
+        self.authenticate_user("adam@gmail.com", "@Us3r.co3mW")
+        response = self.update_user("admin1", "adam@gmail.com", "@Us3r.co3mW")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_update_with_user_logged_out(self):
         """
         Test user update with user not logged in
         """
-        response = self.update_user("admin1", "adam@gmail.com", "@Us3r.com")
+        response = self.update_user("admin1", "adam@gmail.com", "@Us3r.co3mW")
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_update_with_user_details_exist(self):
@@ -143,7 +143,7 @@ class TestUserUpdate(BaseTest):
         Test user update with user details that exist
         """
         self.authenticate_user("admin@authors.com", "adm123Pass!!")
-        response = self.update_user("admin1", "adam@gmail.com", "@Us3r.com")
+        response = self.update_user("admin1", "adam@gmail.com", "@Us3r.co3mW")
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_update_with_invalid_value(self):
@@ -151,7 +151,7 @@ class TestUserUpdate(BaseTest):
         Test user update with invalid credentials
         """
         self.authenticate_user("admin@authors.com", "adm123Pass!!")
-        response = self.update_user("admin1", "adamgmail.com", "@Us3r.com")
+        response = self.update_user("admin1", "adamgmail.com", "@Us3r.co3mW")
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
         response = self.update_user("evegirl", "eve@gmail.com", "@Us")
@@ -168,7 +168,7 @@ class TestGetUser(BaseTest):
         """
         Test get user with the correct login credentials
         """
-        self.authenticate_user("adam@gmail.com", "@Us3r.com")
+        self.authenticate_user("adam@gmail.com", "@Us3r.co3mW")
         response = self.get_user()
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
