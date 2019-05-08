@@ -2,7 +2,6 @@ import json
 from rest_framework.test import APITestCase, APIClient
 from rest_framework.views import status
 from ...authentication.models import User
-from ..models import Followers
 
 
 class TestFollowUsers(APITestCase):
@@ -18,6 +17,8 @@ class TestFollowUsers(APITestCase):
             'jane', 'jane@gmail.com', 'passworddude')
         self.juma = self.save_user(
             'juma', 'juma@gmail.com', 'passworddude')
+        self.green = self.save_user(
+            'green', 'green@gmail.com', 'passworddude')
 
     def save_user(self, username, email, password):
         data = {'username': username,
@@ -32,6 +33,11 @@ class TestFollowUsers(APITestCase):
         user = self.save_user(username, email, password)
         return user
 
+    def get_user_object2(self, username='hulk',
+                         email='hulk@gmail.com', password='passworddude'):
+        user = self.save_user(username, email, password)
+        return user
+
     def test_followed_Successfully(self):
         """test if user followed successfully"""
         correct_user = self.get_user_object()
@@ -40,9 +46,9 @@ class TestFollowUsers(APITestCase):
             HTTP_AUTHORIZATION='Bearer ' + jwt)
         res = self.client.post(
             '/api/profiles/Thanos/follow/')
-        self.assertEqual(res.status_code, status.HTTP_202_ACCEPTED)
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(json.loads(res.content), {'profile': {
-            'username': 'Thanos', 'first_name': '', 'last_name': '', 'bio': ''}})
+                         'message': 'You now follow Thanos'}})
 
     def test_cannot_followthemselves(self):
         """ test users cannot follow themselves"""
@@ -54,7 +60,7 @@ class TestFollowUsers(APITestCase):
             '/api/profiles/{}/follow/'.format(correct_user.username))
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(json.loads(res.content), {'profile': {
-                         'error': 'You can not follow yourself.'}})
+                         'message': 'You cannot follow yourself'}})
 
     def test_authenticated_user(self):
         """test if user is authenticated"""
@@ -72,9 +78,9 @@ class TestFollowUsers(APITestCase):
         self.client.post('/api/profiles/Thanos/follow/')
         res = self.client.delete(
             '/api/profiles/Thanos/follow/')
-        self.assertEqual(res.status_code, status.HTTP_202_ACCEPTED)
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(json.loads(res.content), {'profile': {
-            'username': 'Thanos', 'first_name': '', 'last_name': '', 'bio': ''}})
+                         'message': 'You have unfollowed Thanos'}})
 
     def test_already_following(self):
         """test if user is already following a user"""
@@ -87,7 +93,7 @@ class TestFollowUsers(APITestCase):
             '/api/profiles/Thanos/follow/')
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(json.loads(res.content), {'profile': {
-            'error': 'You are already following Thanos.'}})
+                         'message': 'You already follow Thanos'}})
 
     def test_cannot_unfollow_they_are_not_following(self):
         """test if a user is following before unfollowing"""
@@ -99,7 +105,7 @@ class TestFollowUsers(APITestCase):
             '/api/profiles/flex/follow/')
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(json.loads(res.content), {'profile': {
-            'error': 'you have to be following the user in order to unfollow.'}})
+                         'message': 'You do not follow flex'}})
 
     def test_no_followers_yet(self):
         """test if user has any followers"""
@@ -109,8 +115,8 @@ class TestFollowUsers(APITestCase):
             HTTP_AUTHORIZATION='Bearer ' + jwt)
         res = self.client.get('/api/profiles/jane/followers/')
         self.assertEqual(res.status_code, status.HTTP_200_OK)
-        self.assertEqual(json.loads(res.content), {'profile': {
-            'message': 'jane has no followers yet'}})
+        self.assertEqual(json.loads(res.content), {
+                         'profile': {'followers': [], 'count': 0}})
 
     def test_no_followings_yet(self):
         """test if user has any followings"""
@@ -120,31 +126,82 @@ class TestFollowUsers(APITestCase):
             HTTP_AUTHORIZATION='Bearer ' + jwt)
         res = self.client.get('/api/profiles/jane/follow/')
         self.assertEqual(res.status_code, status.HTTP_200_OK)
-        self.assertEqual(json.loads(res.content), {'profile': {
-            'message': 'jane has no followings yet'}})
+        self.assertEqual(json.loads(res.content), {
+                         'profile': {'following': [], 'count': 0}})
 
     def test_get_all_following(self):
         correct_user = self.get_user_object()
         jwt = correct_user.token()
         self.client.credentials(
             HTTP_AUTHORIZATION='Bearer ' + jwt)
-        follow = Followers()
-        follow.profile_id = correct_user.pk
-        follow.followed_id = self.flex.pk
-        follow.save()
 
         res = self.client.get('/api/profiles/ironman/follow/')
         self.assertEqual(res.status_code, status.HTTP_200_OK)
 
     def test_get_all_followers(self):
+        correct_user = self.get_user_object2()
+        jwt = correct_user.token()
+        self.client.credentials(
+            HTTP_AUTHORIZATION='Bearer ' + jwt)
+
+        res = self.client.get('/api/profiles/hulk/followers/')
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+
+    def test_user_not_found_follow(self):
+        """test user not found when follow"""
         correct_user = self.get_user_object()
         jwt = correct_user.token()
         self.client.credentials(
             HTTP_AUTHORIZATION='Bearer ' + jwt)
-        follow = Followers()
-        follow.profile_id = correct_user.pk
-        follow.followed_id = self.jane.pk
-        follow.save()
+        res = self.client.post(
+            '/api/profiles/john/follow/')
+        self.assertEqual(res.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(json.loads(res.content), {'profile': {
+                         'detail': 'User with that username Not found'}})
 
-        res = self.client.get('/api/profiles/ironman/followers/')
+    def test_user_not_found_unfollow(self):
+        """test user not found when unfollow"""
+        correct_user = self.get_user_object()
+        jwt = correct_user.token()
+        self.client.credentials(
+            HTTP_AUTHORIZATION='Bearer ' + jwt)
+        res = self.client.delete(
+            '/api/profiles/john/follow/')
+        self.assertEqual(res.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(json.loads(res.content), {'profile': {
+                         'detail': 'User with that username Not found'}})
+
+    def test_user_not_found_get_followers(self):
+        """test user not found when getfollowers"""
+        correct_user = self.get_user_object()
+        jwt = correct_user.token()
+        self.client.credentials(
+            HTTP_AUTHORIZATION='Bearer ' + jwt)
+
+        res = self.client.get('/api/profiles/john/followers/')
+        self.assertEqual(res.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(json.loads(res.content), {'profile': {
+                         'detail': 'User with that username Not found'}})
+
+    def test_user_not_found_get_followings(self):
+        """test user not found when getfollowings"""
+        correct_user = self.get_user_object()
+        jwt = correct_user.token()
+        self.client.credentials(
+            HTTP_AUTHORIZATION='Bearer ' + jwt)
+
+        res = self.client.get('/api/profiles/john/follow/')
+        self.assertEqual(res.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(json.loads(res.content), {'profile': {
+                         'detail': 'User with that username Not found'}})
+
+    def test_get_all_followers_with_response_message(self):
+        correct_user = self.green
+        jwt = correct_user.token()
+        self.client.credentials(
+            HTTP_AUTHORIZATION='Bearer ' + jwt)
+
+        res = self.client.get('/api/profiles/jane/followers/')
         self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(json.loads(res.content), {
+                         'profile': {'count': 0, 'followers': []}})
