@@ -106,11 +106,9 @@ class BaseTest(APITestCase):
         return self.client.post(
             self.register_url,
             data=json.dumps({
-                "user": {
-                    "username": username,
-                    "email": email,
-                    "password": password
-                }
+                "username": username,
+                "email": email,
+                "password": password
             }),
             content_type="application/json"
         )
@@ -122,10 +120,8 @@ class BaseTest(APITestCase):
         return self.client.post(
             self.register_url,
             data=json.dumps({
-                "user": {
-                    "email": email,
-                    "password": password
-                }
+                "email": email,
+                "password": password
             }),
             content_type="application/json"
         )
@@ -137,10 +133,8 @@ class BaseTest(APITestCase):
         return self.client.post(
             self.login_url,
             data=json.dumps({
-                "user": {
-                    "email": email,
-                    "password": password
-                }
+                "email": email,
+                "password": password
             }),
             content_type="application/json"
         )
@@ -155,11 +149,9 @@ class BaseTest(APITestCase):
         return self.client.put(
             self.update_url,
             data=json.dumps({
-                "user": {
-                    "username": username,
-                    "email": email,
-                    "password": password
-                }
+                "username": username,
+                "email": email,
+                "password": password
             }),
             content_type="application/json"
         )
@@ -208,9 +200,7 @@ class PasswordResetBaseTest(BaseTest):
         self.password_reset_confirm_url = reverse(
             "authentication:password_reset_confirm")
         self.reset_data = {
-            "user": {
-                "email": self.email
-            }
+            "email": self.email
         }
         self.password_data = {
             "password": "HenkDTestPAss23!#",
