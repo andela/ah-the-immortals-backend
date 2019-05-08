@@ -1,12 +1,15 @@
-from rest_framework import serializers
-from .models import Article, Favorite
 import json
-from authors.apps.articles.models import Tag
-from rest_framework.pagination import PageNumberPagination
 from collections import OrderedDict
-from rest_framework.response import Response
-from .exceptions import ArticleNotFound
+
+from authors.apps.articles.models import Tag
 from authors.apps.utils.baseserializer import BaseSerializer
+from django.db.models import Avg
+from rest_framework import serializers
+from rest_framework.pagination import PageNumberPagination
+from rest_framework.response import Response
+
+from .exceptions import ArticleNotFound
+from .models import Article, Favorite, RatingModel
 
 
 class ArticleSerializer(BaseSerializer):
@@ -112,3 +115,37 @@ class FavoritesSerializer(serializers.ModelSerializer):
         fields = (
             'user', 'article'
         )
+class RatingSerializer(ArticleSerializer):
+    """
+    Serializer class to rate an article
+    """
+
+    rated_by = serializers.ReadOnlyField()
+    article = serializers.ReadOnlyField(source='get_articles_details')
+    rate = serializers.IntegerField(
+        min_value=1,
+        max_value=5,
+        required=True
+    )
+    average_rating = serializers.SerializerMethodField(
+        method_name="calulate_average_rating"
+    )
+
+    class Meta:
+        model = RatingModel
+        fields = ('rate',
+                  'average_rating',
+                  'article',
+                  'rated_by'
+                  )
+
+    def calulate_average_rating(self, obj):
+        """
+        Calculate the average rating of an article
+        """
+        average_rate = RatingModel.objects.filter(article=obj.article,
+                                                  ).aggregate(rate=Avg('rate'))
+
+        if average_rate["rate"]:
+            return float('%.2f' % (average_rate["rate"]))
+        return 0

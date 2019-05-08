@@ -1,17 +1,15 @@
+from django.conf.urls import url
 from django.urls import path
-from .views import (
-    ListCreateArticleAPIView,
-    RetrieveUpdateArticleAPIView,
-    FetchTags,
-    LikeDislikeView,
-    FavoritesView,
-    ListUserFavoriteArticlesView)
+
+from .views import (FavoritesView, FetchTags, LikeDislikeView,
+                    ListCreateArticleAPIView, ListUserFavoriteArticlesView,
+                    RateArticleAPIView, RetrieveUpdateArticleAPIView)
 
 app_name = 'articles'
 
 urlpatterns = [
     path('articles/', ListCreateArticleAPIView.as_view(), name='article'),
-    path('articles/<slug>/', RetrieveUpdateArticleAPIView.as_view(),
+    path('articles/<slug>', RetrieveUpdateArticleAPIView.as_view(),
          name='articles'),
     path('tags/', FetchTags.as_view(), name="all_tags"),
     path('articles/<str:slug>/<str:vote_type>/vote/',
@@ -20,4 +18,6 @@ urlpatterns = [
          FavoritesView.as_view(), name='favorite'),
     path('articles/favorites/me/',
          ListUserFavoriteArticlesView.as_view(), name='get_favorite'),
+    path('articles/<slug>/rate/',
+         RateArticleAPIView.as_view(), name='rating_articles'),
 ]

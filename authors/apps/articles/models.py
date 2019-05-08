@@ -101,3 +101,27 @@ class Favorite(models.Model):
     """
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     article = models.ForeignKey(Article, on_delete=models.CASCADE)
+
+
+class RatingModel(models.Model):
+    """
+    Models for rating an article (0 - 5)
+    """
+    article = models.ForeignKey(
+        Article, related_name='rated_article', on_delete=models.CASCADE)
+    rated_by = models.ForeignKey(
+        User, related_name='rated_by', on_delete=models.CASCADE)
+    rate = models.IntegerField(default=0)
+
+    def get_articles_details(self):
+        """
+        Fetch relevant articles details
+        """
+        return {
+            "slug": self.article.slug,
+            "title": self.article.title,
+            "description": self.article.description,
+            "body": self.article.body,
+            "created_at": self.article.created_at,
+            "updated_at": self.article.updated_at
+        }
