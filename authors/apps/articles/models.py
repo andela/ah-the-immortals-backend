@@ -22,7 +22,8 @@ class Article(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     author = models.ForeignKey(User, on_delete=models.CASCADE)
-    image = CloudinaryField('image', default='https://res.cloudinary.com/grean/image/upload/v1556488518/samples/vbioaj1wwewmtmeryucv.jpg')
+    image = CloudinaryField(
+        'image', default='https://res.cloudinary.com/grean/image/upload/v1556488518/samples/vbioaj1wwewmtmeryucv.jpg')
 
     def __str__(self):
         return self.slug, self.author.username
@@ -42,3 +43,14 @@ class Article(models.Model):
         Defines the main url to prevent duplicate content
         """
         return "authors:articles", (self.slug)
+
+    def get_author_details(self):
+        """
+        Fetch author's Profile
+        """
+        return {
+            "username": self.author.username,
+            "bio": self.author.profile.bio,
+            "image": self.author.profile.fetch_image,
+            "following": self.author.profile.following.reverse
+        }

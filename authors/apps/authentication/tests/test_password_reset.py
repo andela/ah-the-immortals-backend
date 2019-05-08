@@ -11,7 +11,7 @@ class TestPasswordReset(PasswordResetBaseTest):
         """
         Tests posting of invalid email address
         """
-        self.reset_data["user"]["email"] = "johnsoon.com"
+        self.reset_data["email"] = "johnsoon.com"
         response = self.password_reset()
         self.assertEqual(
             response.status_code,
@@ -28,7 +28,7 @@ class TestPasswordReset(PasswordResetBaseTest):
         """
         tests missing email field
         """
-        del self.reset_data["user"]["email"]
+        del self.reset_data["email"]
         response = self.password_reset()
         self.assertEqual(
             response.status_code,
@@ -45,7 +45,7 @@ class TestPasswordReset(PasswordResetBaseTest):
         """
         Tests password reset with an empty email
         """
-        self.reset_data["user"]["email"] = ""
+        self.reset_data["email"] = ""
         response = self.password_reset()
         self.assertEqual(
             response.status_code,
@@ -62,7 +62,7 @@ class TestPasswordReset(PasswordResetBaseTest):
         """
         Tests for input of a null maill
         """
-        self.reset_data["user"]["email"] = None
+        self.reset_data["email"] = None
         response = self.password_reset()
         self.assertEqual(
             response.status_code,
@@ -94,7 +94,7 @@ class TestPasswordReset(PasswordResetBaseTest):
         """
         Tests unexisting account
         """
-        self.reset_data["user"]["email"] = "jeff@gmail.com"
+        self.reset_data["email"] = "jeff@gmail.com"
         response = self.password_reset()
         self.assertEqual(
             response.status_code,

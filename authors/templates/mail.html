@@ -16,32 +16,35 @@
       height: 100%;
       margin: 0;
       line-height: 1.4;
-      background-color: #c1bdba;
-      color: #111;
+      background-color: white;
+      color: black;
+      -webkit-text-size-adjust: none;
     }
     a {
-      color: #111;
+      color: #414EF9;
     }
+
     /* Layout ------------------------------ */
     .email-wrapper {
-        width: 100%;
-        margin: 5px;
-        padding: 10px;
-        background-color: #F5F7F9;
+      width: 100%;
+      margin: 0;
+      padding: 0;
+      background-color: #F5F7F9;
     }
     .email-content {
       width: 100%;
       margin: 0;
       padding: 0;
     }
+
     /* Masthead ----------------------- */
     .email-masthead {
-        background-color: #fff;
-        box-shadow: 0px -3px 15px 0px darkblue;
-        border-top: #05400A 5px solid;
-        padding: 15px 0;
-        width: 100%;
-        text-align: center;
+      padding: 25px 0;
+      text-align: center;
+    }
+    .email-masthead_logo {
+      max-width: 400px;
+      border: 0;
     }
     .email-masthead_name {
       font-size: 16px;
@@ -49,16 +52,16 @@
       color: #839197;
       text-decoration: none;
       text-shadow: 0 1px 0 white;
-      text-align: center;
     }
+
     /* Body ------------------------------ */
     .email-body {
-        width: 100%;
-        margin: 5px;
-        padding: 5px;
-        border-top: 5px solid #E7EAEC;
-        border-bottom: 5px solid #E7EAEC;
-        background-color: #c1bdba;
+      width: 100%;
+      margin: 0;
+      padding: 0;
+      border-top: 1px solid #E7EAEC;
+      border-bottom: 1px solid #E7EAEC;
+      background-color: #FFFFFF;
     }
     .email-body_inner {
       width: 570px;
@@ -91,34 +94,35 @@
     .align-right {
       text-align: right;
     }
+
     /* Type ------------------------------ */
     h1 {
       margin-top: 0;
       color: #292E31;
       font-size: 19px;
       font-weight: bold;
-      text-align: center;
+      text-align: left;
     }
     h2 {
       margin-top: 0;
       color: #292E31;
       font-size: 16px;
       font-weight: bold;
-      text-align: center;
+      text-align: left;
     }
     h3 {
       margin-top: 0;
       color: #292E31;
       font-size: 14px;
       font-weight: bold;
-      text-align: center;
+      text-align: left;
     }
     p {
       margin-top: 0;
-      color: #839197;
+      color: black;
       font-size: 16px;
       line-height: 1.5em;
-      text-align: center;
+      text-align: left;
     }
     p.sub {
       font-size: 12px;
@@ -126,30 +130,31 @@
     p.center {
       text-align: center;
     }
+
     /* Buttons ------------------------------ */
     .button {
-        display: inline-block;
-        width: 150px;
-        border-radius: 3px;
-        line-height: 40px;
-        text-align: center;
-        text-decoration: none;
-        text-align: center;
-        color: white;
-        font-size: 16px;
-        background-color: rgb(5, 64, 10);
-        padding: 15px 20px;
-        text-decoration: none;
+      display: inline-block;
+      width: 200px;
+      background-color: #414EF9;
+      border-radius: 3px;
+      color: #ffffff;
+      font-size: 15px;
+      line-height: 45px;
+      text-align: center;
+      text-decoration: none;
+      -webkit-text-size-adjust: none;
+      mso-hide: all;
     }
     .button--green {
       background-color: #28DB67;
     }
     .button--red {
-      background-color: #FF3665;
+      background-color: rgb(226, 173, 185);
     }
-     #Link {
-      color: #FFFFFF;
+    .button--blue {
+      background-color: dodgerblue;
     }
+
     /*Media Queries ------------------------------ */
     @media only screen and (max-width: 600px) {
       .email-body_inner,
@@ -182,18 +187,20 @@
                 <!-- Body content -->
                 <tr>
                   <td class="content-cell">
-                    <h1 align="center" >Confirm your account.</h1>
-                    <p>You’re almost there. Confirm your account below to finish creating your Author's account.</p>
+                      <h1>Hi {{name}},</h1>
+                    <p>We need to make sure you're you!</p>
+                    <p>So we need to confirm the email address before we activate your account. </p>
                     <!-- Action -->
                     <table class="body-action" align="center" width="100%" cellpadding="0" cellspacing="0">
                       <tr>
                         <td align="center">
                           <div>
-                            <a id="Link" href="{{ verification }}" class="button button--blue">Get Started</a>
+                            <a id="Link" href="{{ verification }}" class="button button--blue">Verify Email</a>
                           </div>
                         </td>
                       </tr>
                     </table>
+                    <p>Thanks for creating an account with us. </p>
 
                     <!-- Sub copy -->
                     <table class="body-sub">
@@ -215,6 +222,7 @@
               <table class="email-footer" align="center" width="570" cellpadding="0" cellspacing="0">
                 <tr>
                   <td class="content-cell">
+                    <p class="sub center">&copy; 2019 Authors Heaven. All rights reserved.</p>
                     <p class="sub center">
                       Authors Haven.
                       <br>Andela Kenya , off USIU road

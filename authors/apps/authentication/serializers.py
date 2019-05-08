@@ -13,41 +13,62 @@ from password_strength import PasswordStats
 
 class RegistrationSerializer(serializers.ModelSerializer):
     """Serializers registration requests and creates a new user."""
-
-    # Ensure passwords are at least 8 characters long, no longer than 30
-    # Password has no spaces
-    password = serializers.RegexField(
-        regex=("^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)\S{8,}$"),
-        max_length=30,
-        min_length=8,
-        write_only=True,
-        required=True,
-        error_messages={
-            'required': 'Password is a required field',
-            'min_length': 'Password must be at least 8 characters long',
-            'max_length': 'Password cannot be more than 30 characters',
-            'invalid': 'Password must have alphanumeric characters with no space',
-        }
-    )
-
-    # Email must be valid and unique
-    # Email name should not contain any special charcaters
-    # Email should have no spaces
-    email = serializers.RegexField(
-        regex=(
-            "^[^<>()[\]\\,;:\%=#^\s@\"$&!@]+@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z0-9]+\.)+[a-zA-Z]{2,}))$"),
-        required=True,
+    
+    email = serializers.EmailField(
         validators=[
             UniqueValidator(
                 queryset=User.objects.all(),
                 message='user with this email already exists'
             )
-        ],
-        error_messages={
-            'invalid': 'Email must be of the format name@domain.com and should not contain any special characters before @',
-            'required': 'Email is a required field'
-        }
+        ]
+ )
+    # Ensure passwords are at least 8 characters long, no longer than 30
+    # Password has no spaces
+    password = serializers.CharField(
+        max_length=250,
+        write_only=True,
+        allow_null=True,
+        allow_blank=True,
+        required=True
     )
+
+    def validate_password(self, value):
+        self.get_password_policy_errors(value)
+        return value
+
+    def get_password_policy_errors(self, password):
+        """
+        Method to captures password policy errors
+        """
+        stats = PasswordStats(password)
+        errors = []
+        if stats.letters_uppercase < 2:
+            errors.append(
+                "password should have at least 2 uppercase letters")
+
+        if stats.letters_lowercase < 3:
+            errors.append("password should have at least 3 lowercase letters")
+
+        if stats.numbers < 2:
+            errors.append("password should have at least 2 digits")
+
+        if stats.special_characters < 1:
+            errors.append("password should have at least 1 special character")
+
+        self.get_repeating_password(stats, errors)
+        if errors:
+            raise serializers.ValidationError(errors)
+
+    def get_repeating_password(self, stats, errors):
+        """
+        Check for password repetition and sequence 
+        """
+        if stats.sequences_length > 2:
+            errors.append("password should not have a repeating sequence")
+
+        if stats.repeated_patterns_length > 2:
+            errors.append("password should not have a repeating characters")
+
 
     # Username should be unique
     # Username should not have spaces or special characters
@@ -58,11 +79,11 @@ class RegistrationSerializer(serializers.ModelSerializer):
         validators=[
             UniqueValidator(
                 queryset=User.objects.all(),
-                message='username already taken',
+                message='user with this username already exists',
             )
         ],
         error_messages={
-            'invalid': 'Username should have no spaces or special characters only',
+            'invalid': 'Username can only contain letters, numbers, underscores, and hyphens',
             'required': 'Username is a required field'
         }
     )
@@ -122,7 +143,7 @@ class LoginSerializer(serializers.Serializer):
 
         # The `authenticate` method is provided by Django and handles checking
         # for a user that matches this email/password combination. Notice how
-        # we pass `email` as the `username` value. Remember that, in our User
+        # we pass `email` as the `username` data. Remember that, in our User
         # model, we set `USERNAME_FIELD` as `email`.
         user = authenticate(username=email, password=password)
 
@@ -142,10 +163,6 @@ class LoginSerializer(serializers.Serializer):
             raise serializers.ValidationError(
                 'This user has been deactivated.'
             )
-        if not user.is_verified:
-            raise serializers.ValidationError(
-                'This user has not been verified'
-            )
 
         # The `validate` method should return a dictionary of validated data.
         # This is the data that is passed to the `create` and `update` methods
@@ -161,7 +178,7 @@ class UserSerializer(serializers.ModelSerializer):
     """Handles serialization and deserialization of User objects."""
 
     # Passwords must be at least 8 characters, but no more than 128
-    # characters. These values are the default provided by Django. We could
+    # characters. These datas are the default provided by Django. We could
     # change them, but that would create extra work while introducing no real
     # benefit, so let's just stick with the defaults.
     password = serializers.CharField(

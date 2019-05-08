@@ -8,7 +8,7 @@ class ArticleSerializer(serializers.ModelSerializer):
     Articles serializer
     """
     image_url = serializers.ReadOnlyField(source="get_image")
-    # author = serializers.ReadOnlyField(source="get_authors")
+    author = serializers.ReadOnlyField(source="get_author_details")
 
     class Meta:
         model = Article

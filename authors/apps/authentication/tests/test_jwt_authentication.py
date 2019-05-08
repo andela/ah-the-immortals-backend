@@ -14,14 +14,14 @@ class TestTokenAuthentication(BaseTest):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_get_jwt_after_login(self):
-        self.signup_user('issa', 'issamwangi@gmail.com', 'Maina9176')
+        self.signup_user('issa', 'issamwangi@gmail.com', '@Us3r.co3mW')
         self.verify_user('issamwangi@gmail.com')
-        response = self.login_user('issamwangi@gmail.com', 'Maina9176')
+        response = self.login_user('issamwangi@gmail.com', '@Us3r.co3mW')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_get_jwt_after_signup(self):
         response = self.signup_user(
-            'issa', 'issamwangi@gmail.com', 'Maina9176')
+            'issa', 'issamwangi@gmail.com', '@Us3r.co3mW')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
     def test_invalid_authorization_header(self):
@@ -82,4 +82,10 @@ class TestTokenAuthentication(BaseTest):
         self.assertEqual(
             response.data['detail'],
             'The token used has expired. Please authenticate again!')
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_unverified_user(self):
+        self.signup_user('Mariga', 'mariga@betin.com', 'HDello14#')
+        response = self.client.patch(self.update_url)
+
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)

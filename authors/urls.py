@@ -17,17 +17,20 @@ from django.conf.urls import url, include
 from django.urls import path
 from django.contrib import admin
 from rest_framework_swagger.views import get_swagger_view
+from django.views.generic.base import RedirectView
 
 schema_view = get_swagger_view(title="The Immortals Api Swagger Docs")
 authurls = include(('authors.apps.authentication.urls',
                     'authentication'), namespace='authentication')
 profileurls = include(('authors.apps.profiles.urls',
                        'profiles'), namespace='profile')
-articleurls = include(('authors.apps.articles.urls', 'articles'), namespace='article')
+articleurls = include(('authors.apps.articles.urls', 'articles'),
+                      namespace='article')
 urlpatterns = [
     path('admin/', admin.site.urls),
     url(r'^api/', authurls),
-    path('', schema_view),
+    path('api/swagger/', schema_view),
     path('api/', profileurls),
+    path('', RedirectView.as_view(url='/api/swagger/')),
     path('api/', articleurls),
 ]

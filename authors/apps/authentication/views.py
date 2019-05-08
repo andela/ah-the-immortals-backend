@@ -7,10 +7,13 @@ from rest_framework.generics import RetrieveUpdateAPIView, GenericAPIView, Creat
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework import authentication, exceptions
+
 from social_django.utils import load_backend, load_strategy
 from social_core.backends.oauth import BaseOAuth1, BaseOAuth2
 from social_core.exceptions import MissingBackend
-from .renderers import UserJSONRenderer, SignupUserJSONRenderer
+
+from .renderers import UserJSONRenderer
 from .serializers import (
     LoginSerializer, RegistrationSerializer, UserSerializer,
     SocialAuthSerializer,
@@ -26,18 +29,19 @@ from rest_framework.authentication import (
 from authors.utils.mailer import VerificationMail
 from django.utils import timezone
 
-auth = JWTAuthentication()
 User = get_user_model()
 
 
 class RegistrationAPIView(GenericAPIView):
+    """
+    signup a user
+    """
     # Allow any user (authenticated or not) to hit this endpoint.
     permission_classes = (AllowAny,)
-    renderer_classes = (SignupUserJSONRenderer,)
     serializer_class = RegistrationSerializer
 
     def post(self, request):
-        user = request.data.get('user', {})
+        user = request.data
 
         # The create serializer, validate serializer, save serializer pattern
         # below is common and you will see it a lot throughout this course and
@@ -48,22 +52,28 @@ class RegistrationAPIView(GenericAPIView):
         serializer.save()
 
         ConfirmationMail(serializer.data).send_mail()
-
         message = {
-            "email": serializer.data['email'],
-            "username": serializer.data['username']
+            "user": {
+                "email": serializer.data.get('email'),
+                "username": serializer.data.get("username"),
+                "token": serializer.data.get("token")
+            },
+            "message": "Account created successfully. +\
+                Kindly check your email to verify your account."
         }
-
         return Response(message, status=status.HTTP_201_CREATED)
 
 
 class LoginAPIView(GenericAPIView):
+    """
+    login a user
+    """
     permission_classes = (AllowAny,)
     renderer_classes = (UserJSONRenderer,)
     serializer_class = LoginSerializer
 
     def post(self, request):
-        user = request.data.get('user', {})
+        user = request.data
 
         # Notice here that we do not call `serializer.save()` like we did for
         # the registration endpoint. This is because we don't actually have
@@ -75,11 +85,17 @@ class LoginAPIView(GenericAPIView):
 
 
 class UserRetrieveUpdateAPIView(RetrieveUpdateAPIView):
+    """
+    Retrieve and update users
+    """
     permission_classes = (IsAuthenticated,)
     renderer_classes = (UserJSONRenderer,)
     serializer_class = UserSerializer
 
     def retrieve(self, request, *args, **kwargs):
+        """
+        Get the currently login user
+        """
         # There is nothing to validate or save here. Instead, we just want the
         # serializer to handle turning our `User` object into something that
         # can be JSONified and sent to the client.
@@ -88,7 +104,10 @@ class UserRetrieveUpdateAPIView(RetrieveUpdateAPIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def update(self, request, *args, **kwargs):
-        serializer_data = request.data.get('user', {})
+        """
+        update users
+        """
+        serializer_data = request.data
 
         # Here is that serialize, validate, save pattern we talked about
         # before.
@@ -149,7 +168,7 @@ class PasswordResetView(GenericAPIView):
     serializer_class = PasswordResetSerializer
 
     def post(self, request):
-        data = request.data.get("user")
+        data = request.data
         serializer = self.serializer_class(data=data)
         serializer.is_valid(raise_exception=True)
         email = data.get("email")
@@ -203,9 +222,19 @@ class SignupEmailVerificationView(GenericAPIView):
     """ Verification of email """
 
     def get(self, request, token):
+        try:
+            user_information = jwt.api_jwt.decode(
+                token, settings.SECRET_KEY, algorithms='HS256')
+        except jwt.api_jwt.DecodeError:
+            raise exceptions.AuthenticationFailed(
+                'Invalid Token. The token provided cannot be decoded!'
+            )
+        except jwt.api_jwt.ExpiredSignatureError:
+            raise exceptions.AuthenticationFailed(
+                'The token used has expired. Please authenticate again!'
+            )
 
-        user_data = auth.authenticate_token(request, token)
-        user_email = user_data[0].email
+        user_email = user_information['user_data']['email']
         user = User.objects.get(email=user_email)
         if user.is_verified:
             return Response({
