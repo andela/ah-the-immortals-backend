@@ -75,6 +75,22 @@ class Article(VoteModel, models.Model):
         }
 
     @property
+    def average_ratings(self):
+        import math
+        ratings = RatingModel.objects.filter(article__pk=self.pk)
+        average = 0
+        if ratings:
+            total = sum([rating.rate for rating in ratings])
+            average = total/ratings.count()
+        return average
+
+    @property
+    def my_ratings(self):
+        rates = RatingModel.objects.filter(article__pk=self.pk)
+        my_ratings = [rates.rate for rating in rates]
+        return my_ratings
+
+    @property
     def tagList(self):
         """
         Gets all tags on an article
@@ -207,3 +223,23 @@ class RatingModel(models.Model):
             "created_at": self.article.created_at,
             "updated_at": self.article.updated_at
         }
+
+    def my_ratings(self, article, user):
+        """
+        Model to display rating for users in an articles
+        """
+
+        try:
+            article = self.article
+            user = self.rated_by
+        except Article.DoesNotExist:
+            pass
+        
+
+        queryset = RatingModel.objects.filter(article_id=article, rated_by_id=user).first()
+
+  
+
+        if queryset:
+            return queryset.rate
+        return False

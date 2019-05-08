@@ -1,18 +1,18 @@
 from django.core.exceptions import ObjectDoesNotExist
 from django.shortcuts import get_object_or_404, render
+from django_filters import rest_framework as filters
 from rest_framework import permissions, status
 from rest_framework.exceptions import APIException, ValidationError
+from rest_framework.filters import SearchFilter
 from rest_framework.generics import GenericAPIView, ListCreateAPIView
 from rest_framework.permissions import (AllowAny, IsAuthenticated,
                                         IsAuthenticatedOrReadOnly)
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from django_filters import rest_framework as filters
-from rest_framework.filters import SearchFilter
 
 from .exceptions import ArticleNotFound, Forbidden, ItemDoesNotExist
-from .models import Article, Comment, Favorite, RatingModel, Tag
 from .filters import ArticleFilter
+from .models import Article, Comment, Favorite, RatingModel, Tag
 from .serializers import (ArticlePaginator, ArticleSerializer,
                           CommentChildSerializer, CommentDetailSerializer,
                           CommentSerializer,
@@ -123,7 +123,8 @@ class ListCreateArticleAPIView(ListCreateAPIView):
                                        remove_fields=['like',
                                                       'comments',
                                                       'favorite',
-                                                      'dislike'])
+                                                      'dislike',
+                                                      'my_ratings'])
         response = paginator.get_paginated_response({
             "articles": serializer.data
         })
@@ -140,14 +141,14 @@ class RetrieveUpdateArticleAPIView(GenericAPIView):
     serializer_class = ArticleSerializer
 
     def retrieve_article(self, slug):
-        """
-        Fetch one article
-        """
-        try:
-            article = Article.objects.get(slug=slug)
-            return article
-        except Article.DoesNotExist:
-            raise ArticleNotFound
+            """
+            Fetch one article
+            """
+            try:
+                article = Article.objects.get(slug=slug)
+                return article
+            except Article.DoesNotExist:
+                raise ArticleNotFound
 
     def get(self, request, slug):
         """
@@ -426,7 +427,7 @@ class ListUserFavoriteArticlesView(GenericAPIView):
 
 class RateArticleAPIView(GenericAPIView):
     """
-    Rating an article from 0 - 5
+    Rating an article from 1 - 5
     """
     permission_classes = (IsAuthenticatedOrReadOnly,)
 
@@ -444,7 +445,7 @@ class RateArticleAPIView(GenericAPIView):
         if article.author == request.user:
             raise ValidationError(
                 detail={
-                    "error": "Dang! You can't rate your own article"
+                    "error": "You can't rate your own article"
                 }
             )
 
