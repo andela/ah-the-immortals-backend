@@ -53,6 +53,11 @@ class BaseTest(APITestCase):
         }
         self.user = self.is_authenticated("adam@gmail.com", "@Us3r.com")
         self.other_user = self.is_authenticated("jim@gmail.com", "@Us3r.com")
+        self.comment = {
+            "comment": {
+                "body": "test comment "
+            }
+        }
 
     def login(self, email, password):
         """

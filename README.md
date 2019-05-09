@@ -290,9 +290,7 @@ Example request body:
 
 ```source-json
 {
-	"user":{
 		"email":"codingbrian58@gmail.com"
-	}
 }
 ```
 
@@ -307,7 +305,6 @@ Example request body:
 
 ```source-json
 {
-	"token":"bb57bb7c779d2c7872c8621d5735e3b8170d6105",
 	"password":"passroneggne2424",
 	"password_confirm":"passroneggne2424"
 }
