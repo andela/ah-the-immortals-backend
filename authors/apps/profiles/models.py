@@ -39,7 +39,6 @@ class Profile(models.Model):
         return self.following.all()
 
     def followers_list(self):
-        print(self.w_following.all())
         return self.w_following.all()
 
     def if_following(self, profile):

@@ -1,15 +1,17 @@
-from django.shortcuts import render
+from django.shortcuts import get_object_or_404, render
 from rest_framework import permissions, status
 from rest_framework.exceptions import APIException, ValidationError
 from rest_framework.generics import GenericAPIView, ListCreateAPIView
-from rest_framework.permissions import AllowAny, IsAuthenticatedOrReadOnly
+from rest_framework.permissions import (AllowAny, IsAuthenticated,
+                                        IsAuthenticatedOrReadOnly)
 from rest_framework.response import Response
 
-from .exceptions import ArticleNotFound
-from .models import Article, Favorite, RatingModel, Tag
+from .exceptions import ArticleNotFound, Forbidden, ItemDoesNotExist
+from .models import Article, Comment, Favorite, RatingModel, Tag
 from .serializers import (ArticlePaginator, ArticleSerializer,
-                          FavoritedArticlesSerializer, FavoritesSerializer,
-                          RatingSerializer, add_tag_list)
+                          CommentChildSerializer, CommentDetailSerializer,
+                          CommentSerializer, FavoritedArticlesSerializer,
+                          FavoritesSerializer, RatingSerializer, add_tag_list)
 
 
 class ListCreateArticleAPIView(ListCreateAPIView):
@@ -82,14 +84,14 @@ class RetrieveUpdateArticleAPIView(GenericAPIView):
     serializer_class = ArticleSerializer
 
     def retrieve_article(self, slug):
-            """
-            Fetch one article
-            """
-            try:
-                article = Article.objects.get(slug=slug)
-                return article
-            except Article.DoesNotExist:
-                raise ArticleNotFound
+        """
+        Fetch one article
+        """
+        try:
+            article = Article.objects.get(slug=slug)
+            return article
+        except Article.DoesNotExist:
+            raise ArticleNotFound
 
     def get(self, request, slug):
         """
@@ -390,3 +392,119 @@ class RateArticleAPIView(GenericAPIView):
         }})
 
         return Response(articles, status=status.HTTP_201_CREATED)
+
+
+class CommentAPIView(GenericAPIView):
+    """
+    class for post and get comments
+    """
+    permission_classes = (IsAuthenticated,)
+    serializer_class = CommentSerializer
+
+    def post(self, request, **kwargs):
+        """
+        post a comment on an article
+        """
+        comment = request.data
+        try:
+            slug = self.kwargs['slug']
+            article = Article.objects.get(slug=slug)
+
+            author = request.user
+            comment['author'] = author.id
+            comment['article'] = article.id
+            serializer = self.serializer_class(data=comment)
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        except Article.DoesNotExist:
+            raise ArticleNotFound
+
+    def get(self, request, slug):
+        """
+         Get multiple comments
+        """
+        self.serializer_class = CommentChildSerializer
+        try:
+            article = Article.objects.get(slug=slug)
+            article_id = article.id
+            comment = Comment.objects.all().filter(article_id=article_id)
+            serializer = self.serializer_class(comment, many=True)
+            return Response({'comments': serializer.data}, status.HTTP_200_OK)
+        except Article.DoesNotExist:
+            raise ItemDoesNotExist
+
+
+class CommentDetailAPIView(GenericAPIView):
+    permission_classes = (IsAuthenticated, )
+    serializer_class = CommentDetailSerializer
+
+    def get(self, request, slug, id):
+        """
+        get a comment
+        """
+
+        comment = Comment.objects.all().filter(id=id)
+        serializer = self.serializer_class(comment, many=True)
+        return Response({"comment": serializer.data}, status.HTTP_200_OK)
+
+    def post(self, request, slug, id):
+        """
+        create a child comment
+        """
+        comment = request.data
+        article = get_object_or_404(Article, slug=slug)
+        author = request.user
+        comment['author'] = author.id
+        comment['article'] = article.id
+        comment['parent'] = id
+        serializer = self.serializer_class(data=comment)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    def put(self, request, *args, **kwargs):
+        """ 
+        update a comment
+        """
+        comment = request.data
+        try:
+            Id = kwargs['id']
+            slug = kwargs['slug']
+            comment_obj = Comment.objects.get(pk=Id)
+            article = get_object_or_404(Article, slug=slug)
+            if comment_obj.author == request.user:
+                comment['author'] = request.user.id
+                comment['article'] = article.id
+                serializer = self.serializer_class(comment_obj, data=comment)
+                serializer.is_valid(raise_exception=True)
+                serializer.save()
+                return Response(serializer.data)
+            else:
+                raise Forbidden
+        except Comment.DoesNotExist:
+            return Response(
+                {
+                    "error": {
+                        "body": ["unsuccesful update either the comment or"
+                                 "slug not found"
+                                 ]}},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+    def delete(self, request, **kwargs):
+        """
+        delete a comment 
+        """
+        try:
+            comment_obj = Comment.objects.get(id=kwargs['id'])
+            if request.user == comment_obj.author:
+                comment_obj.delete()
+                return Response({
+                    "message": {
+                        "body": ["Comment deleted successfully"]}},
+                    status=status.HTTP_200_OK)
+            else:
+                raise Forbidden
+        except Comment.DoesNotExist:
+            raise ItemDoesNotExist
