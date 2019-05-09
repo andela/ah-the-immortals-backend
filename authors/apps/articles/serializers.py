@@ -26,9 +26,9 @@ def add_tag_list(tag_names, article):
     Adds tag list to an article
     """
     for name in tag_names:
-        if name:
+        if name.strip():
             tag, created = Tag.objects.get_or_create(
-                tag_name=name
+                tag_name=name.strip()
             )
             article.tags.add(tag)
 

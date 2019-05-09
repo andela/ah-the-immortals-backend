@@ -81,3 +81,45 @@ class TestPagination(PagniationBaseTest):
             response.data.get("detail"),
             "Invalid page."
         )
+
+    def test_invalid_page_limit(self):
+        """
+        Tests invalid variable page limit
+        """
+        response = self.get_articles_per_page(page_limit=1.5)
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_404_NOT_FOUND
+        )
+        self.assertEqual(
+            response.data.get("detail"),
+            self.error_msg
+        )
+
+    def test_non_digit_page_limit(self):
+        """
+        Tests a non digit page limit
+        """
+        response = self.get_articles_per_page(page_limit="page5")
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_404_NOT_FOUND
+        )
+        self.assertEqual(
+            response.data.get("detail"),
+            self.error_msg
+        )
+
+    def test_page_limit_less_than_1(self):
+        """
+        Tests page limit that is less than 1
+        """
+        response = self.get_articles_per_page(page_limit=0)
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_404_NOT_FOUND
+        )
+        self.assertEqual(
+            response.data.get("detail"),
+            self.error_msg
+        )

@@ -291,6 +291,7 @@ class PagniationBaseTest(APITestCase):
         self.page_url_prefix = settings.DOMAIN+'/api/articles/'
         self.get_articles_url = reverse("article:article")
         self.path = ""
+        self.error_msg = "Invalid page limit"
 
     def generate_articles(self):
         """
