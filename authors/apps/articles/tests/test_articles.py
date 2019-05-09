@@ -29,7 +29,7 @@ class TestArticles(BaseTest):
         """
         response = self.get_all_articles()
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data.get("articles")[0].get("slug"),
+        self.assertEqual(response.data.get("results").get("articles")[0].get("slug"),
                          self.slug2)
 
     def test_successful_get_one_article(self):

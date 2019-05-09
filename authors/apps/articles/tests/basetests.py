@@ -4,6 +4,7 @@ from rest_framework.reverse import reverse
 from rest_framework.authtoken.models import Token
 import json
 from authors.apps.articles.models import Article, Tag
+from django.conf import settings
 
 User = get_user_model()
 
@@ -266,6 +267,83 @@ class TagsBaseTest(APITestCase):
     def fetch_one_article(self):
         response = self.client.get(
             path=self.update_url,
+            format='json'
+        )
+        return response
+
+
+class PagniationBaseTest(APITestCase):
+    """
+    Base test for paginated article data
+    """
+
+    def setUp(self):
+        self.client = APIClient()
+        self.user = User.objects.create_user(
+            email="mininguathor@gmail.com",
+            username="mningauthor95",
+            password="HeLV27@tica"
+        )
+        self.user.is_verified = True
+        self.user.save()
+        self.default_page_limit = 10
+        self.page = 1
+        self.page_url_prefix = settings.DOMAIN+'/api/articles/'
+        self.get_articles_url = reverse("article:article")
+        self.path = ""
+
+    def generate_articles(self):
+        """
+        Generates 20 articles
+        """
+        for i in range(21):
+             Article.objects.create(
+                 title="Talk Like TED",
+                 description="Tehcnology, Education and Design",
+                 body="To make your speech stand out you need to make it novel",
+                 author=self.user
+             )
+
+    def get_articles_per_page(self, page=1, page_limit=None):
+        """
+        Gets paginated response with a limit and a page
+        """
+        self.path = self.page_url_prefix+'?page=' + \
+            str(page)+'&page_limit='+str(page_limit)
+        response = self.client.get(
+            path=self.path,
+            format="json"
+        )
+        return response
+
+    def get_articles(self):
+        """
+        Gets articles using defaults
+        """
+        response = self.client.get(
+            path=self.get_articles_url,
+            format='json'
+        )
+        return response
+
+    def get_next_page(self):
+        """
+        Gets next page
+        """
+        self.path = self.get_articles().data.get("next")
+        response = self.client.get(
+            path=self.path,
+            format='json'
+        )
+        return response
+
+    def get_previous_page(self):
+        """
+        Gets previous page
+        """
+        self.path = self.get_next_page().data.get("previous")
+        response = self.client.get(
+            path=self.path,
             format='json'
         )
         return response

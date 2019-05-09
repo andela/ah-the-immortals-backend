@@ -1,12 +1,9 @@
 from django.db import models
 from django.contrib.auth import get_user_model
 from autoslug import AutoSlugField
-
 from cloudinary.models import CloudinaryField
 from cloudinary import CloudinaryImage
-
 from authors.apps.profiles.models import Profile
-
 import json
 
 User = get_user_model()

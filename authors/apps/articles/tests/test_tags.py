@@ -128,7 +128,7 @@ class TestPostTags(TagsBaseTest):
             status.HTTP_200_OK
         )
         self.assertEqual(
-            response.data.get("articles")[0].get("tagList"),
+            response.data.get("results").get("articles")[0].get("tagList"),
             self.tagList
         )
 
