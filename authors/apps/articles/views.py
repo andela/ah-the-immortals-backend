@@ -1,12 +1,11 @@
 from rest_framework.exceptions import APIException
 from rest_framework.generics import ListCreateAPIView, GenericAPIView
-from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 from rest_framework import status
-
 from .exceptions import ArticleNotFound
-from .models import Article
-from .serializers import ArticleSerializer
+from rest_framework.permissions import IsAuthenticatedOrReadOnly, AllowAny
+from .models import Article, Tag
+from .serializers import ArticleSerializer, add_tag_list
 
 
 class ListCreateArticleAPIView(ListCreateAPIView):
@@ -20,13 +19,21 @@ class ListCreateArticleAPIView(ListCreateAPIView):
         """
         Create an article
         """
+        tag_names = request.data.get("tags")
         article = request.data
         article["author"] = request.user.pk
         serializer = self.serializer_class(data=article)
         serializer.is_valid(raise_exception=True)
         serializer.save(author=request.user)
-        return Response({"article": serializer.data},
-                        status=status.HTTP_201_CREATED)
+        article = serializer.save(author=request.user)
+        data = serializer.data
+        if tag_names:
+            add_tag_list(tag_names, article)
+        data["tagList"] = article.tagList
+        return Response(
+            data=data,
+            status=status.HTTP_201_CREATED
+        )
 
     def get(self, request):
         """
@@ -35,8 +42,8 @@ class ListCreateArticleAPIView(ListCreateAPIView):
         articles = Article.objects.all()
         serializer = ArticleSerializer(articles, many=True)
         return Response({"articles": serializer.data,
-                        "articlesCount": len(serializer.data)},
-                        status=status.HTTP_200_OK)
+                         "articlesCount": len(serializer.data)}
+                        )
 
 
 class RetrieveUpdateArticleAPIView(GenericAPIView):
@@ -77,17 +84,32 @@ class RetrieveUpdateArticleAPIView(GenericAPIView):
                 instance=article,
                 data=request.data,
                 partial=True
-                )
+            )
             serializer.is_valid(raise_exception=True)
-            serializer.save()
-            return Response({"article": serializer.data},
-                            status=status.HTTP_201_CREATED)
+            article = serializer.save()
+            data = serializer.data
+            tag_names = request.data.get("tags")
+            if tag_names:
+                article.clear_tags
+                add_tag_list(tag_names, article)
+            data["tagList"] = article.tagList
+            return Response(
+                data={
+                    "article": data
+                },
+                status=status.HTTP_201_CREATED
+            )
         else:
-            return Response({"errors": {
-                                "error": [
-                                    "Cannot edit an article that is not yours"
-                                    ]}},
-                            status.HTTP_403_FORBIDDEN)
+            return Response(
+                data={
+                    "errors": {
+                        "error": [
+                            "Cannot edit an article that is not yours"
+                        ]
+                    }
+                },
+                status=status.HTTP_403_FORBIDDEN
+            )
 
     def delete(self, request, slug):
         """
@@ -99,9 +121,39 @@ class RetrieveUpdateArticleAPIView(GenericAPIView):
             article.delete()
         else:
             return Response({"errors": {
-                                "error": [
-                                  "Cannot delete an article that is not yours"
-                                    ]}},
-                            status.HTTP_403_FORBIDDEN)
+                "error": [
+                    "Cannot delete an article that is not yours"
+                ]}},
+                status.HTTP_403_FORBIDDEN)
         return Response({"message": "Article deleted"},
                         status.HTTP_200_OK)
+
+
+class FetchTags(GenericAPIView):
+    """
+    Fetchs all tags from database
+    """
+
+    def get(self, request):
+        """
+        Gets all articles
+        """
+        tags = Tag.objects.all()
+        if not tags:
+            response = Response(
+                data={
+                    "errors": {
+                        "tags":
+                        ["There are no tags in Authors Heaven at the moment"]
+                    }
+                },
+                status=status.HTTP_404_NOT_FOUND
+            )
+        else:
+            response = Response(
+                data={
+                    "tags": [tag.tag_name for tag in tags]
+                },
+                status=status.HTTP_200_OK
+            )
+        return response

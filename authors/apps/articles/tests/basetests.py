@@ -2,8 +2,8 @@ from django.contrib.auth import get_user_model
 from rest_framework.test import APITestCase, APIClient
 from rest_framework.reverse import reverse
 from rest_framework.authtoken.models import Token
-from ..models import Article
 import json
+from authors.apps.articles.models import Article, Tag
 
 User = get_user_model()
 
@@ -12,6 +12,7 @@ class BaseTest(APITestCase):
     """
     Class to set up test case
     """
+
     def setUp(self):
         self.client = APIClient()
         self.login_url = reverse("authentication:login")
@@ -35,10 +36,10 @@ class BaseTest(APITestCase):
         self.user2.save()
 
         self.new_article = {
-                    "title": "How to train your dragon",
-                    "description": "Ever wonder how?",
-                    "body": "You have to believe"
-                }
+            "title": "How to train your dragon",
+            "description": "Ever wonder how?",
+            "body": "You have to believe"
+        }
         self.article = Article.objects.create(
             title='this is mine',
             description='I do not want it',
@@ -48,7 +49,7 @@ class BaseTest(APITestCase):
         )
         self.article.save()
         self.update = {
-                "description": "Brian Koin is making noise"
+            "description": "Brian Koin is making noise"
         }
         self.user = self.is_authenticated("adam@gmail.com", "@Us3r.com")
         self.other_user = self.is_authenticated("jim@gmail.com", "@Us3r.com")
@@ -60,8 +61,8 @@ class BaseTest(APITestCase):
         return self.client.post(
             self.login_url,
             data=json.dumps({
-                    "email": email,
-                    "password": password
+                "email": email,
+                "password": password
             }), content_type="application/json")
 
     def is_authenticated(self, email, password):
@@ -142,3 +143,129 @@ class BaseTest(APITestCase):
         """
         self.other_user
         return self.client.delete(self.articles_url)
+
+
+class TagsBaseTest(APITestCase):
+    """
+    Base Test for tags
+    """
+
+    def setUp(self):
+        self.client = APIClient()
+        self.user = User.objects.create_user(
+            email="mininguathor@gmail.com",
+            username="mningauthor95",
+            password="HeLV27@tica"
+        )
+        self.user.is_verified = True
+        self.user.save()
+        self.article = Article.objects.create(
+            title="Talk Like TED",
+            description="Tehcnology, Education and Design",
+            body="To make your speech stand out you need to make it novel",
+            author=self.user
+        )
+        self.articles_url = reverse("article:article")
+        self.all_tags_url = reverse("article:all_tags")
+        self.login_url = reverse("authentication:login")
+        self.one_article_url = reverse(
+            "articles:articles", args=[self.article.slug])
+        self.update_url = reverse(
+            "articles:articles", args=[self.article.slug])
+        self.tagList = ["Analysis", "Principia"]
+        self.update_tags = ["analytica", "cambridge"]
+        self.article_data = {
+            "title": "Infiniteness of Reals",
+            "description": "Real Analysis",
+            "body": "The infiniteness of reals",
+            "tags": self.tagList
+        }
+        self.update_data = {
+            "title": "Varying",
+            "tags": self.update_tags
+        }
+
+    def clear_articles(self):
+        """
+        clears articles data from the database
+        """
+        [article.delete() for article in Article.objects.all()]
+
+    def clear_tags(self):
+        """
+        Clears all tags from the database
+        """
+        [tag.delete() for tag in Tag.objects.all()]
+
+    def login_user(self):
+        response = self.client.post(
+            path=self.login_url,
+            data={
+                "email": self.user.email,
+                "password": "HeLV27@tica"
+            },
+            format='json'
+        )
+        return response.data
+
+    def authenticate_user(self):
+        self.client.credentials(
+            HTTP_AUTHORIZATION='Bearer '+self.login_user().get("token"))
+
+    def post_article_with_tags(self):
+        """
+        A method for posting an article with tags
+        """
+        response = self.client.post(
+            path=self.articles_url,
+            data=self.article_data,
+            format='json'
+        )
+        return response
+
+    def create_article_with_tags(self):
+        """
+        Successfully creates article with tags
+        """
+        self.authenticate_user()
+        response = self.post_article_with_tags()
+        return response
+
+    def get_articles(self):
+        """
+        Gets tags for articles
+        """
+        response = self.client.get(
+            path=self.articles_url,
+            format='json'
+        )
+        return response
+
+    def get_all_tags(self):
+        """
+        Fetches all articles
+        """
+        response = self.client.get(
+            path=self.all_tags_url,
+            format='json'
+        )
+        return response
+
+    def update_article(self):
+        """
+        Updates an article
+        """
+        self.authenticate_user()
+        response = self.client.patch(
+            path=self.update_url,
+            data=self.update_data,
+            format='json'
+        )
+        return response
+
+    def fetch_one_article(self):
+        response = self.client.get(
+            path=self.update_url,
+            format='json'
+        )
+        return response

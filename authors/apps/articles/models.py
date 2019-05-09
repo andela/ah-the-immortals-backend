@@ -6,8 +6,31 @@ from cloudinary.models import CloudinaryField
 from cloudinary import CloudinaryImage
 
 from authors.apps.profiles.models import Profile
-from django.contrib.auth import get_user_model
+
+import json
+
 User = get_user_model()
+
+
+class Tag(models.Model):
+    """
+    Model for for tags
+    """
+    tag_name = models.CharField(max_length=100)
+
+    class Meta:
+        ordering = ('tag_name',)
+
+    def __str__(self):
+        return self.tag_name
+
+    @property
+    def articles(self):
+        """
+        gets all articles associated with the tag
+        """
+        queryset = Article.objects.filter(tags__pk=self.pk)
+        return queryset
 
 
 class Article(models.Model):
@@ -23,6 +46,7 @@ class Article(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     author = models.ForeignKey(User, on_delete=models.CASCADE)
     image = CloudinaryField('image')
+    tags = models.ManyToManyField(Tag)
 
     class Meta:
         ordering = ['created_at', ]
@@ -39,8 +63,23 @@ class Article(models.Model):
         Fetch author's Profile
         """
         return {
-           "username": self.author.username,
-           "bio": self.author.profile.bio,
-           "image": self.author.profile.fetch_image,
-           "following": self.author.profile.following.reverse
-           }
+            "username": self.author.username,
+            "bio": self.author.profile.bio,
+            "image": self.author.profile.fetch_image,
+            "following": self.author.profile.following.reverse
+        }
+
+    @property
+    def tagList(self):
+        """
+        Gets all tags on an article
+        """
+        tags = [tag.tag_name for tag in self.tags.all()]
+        return tags
+
+    @property
+    def clear_tags(self):
+        """
+        Clears all tags for an article
+        """
+        [self.tags.remove(tag) for tag in self.tags.all()]
