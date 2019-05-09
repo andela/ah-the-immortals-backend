@@ -74,9 +74,11 @@ class Article(models.Model):
         tags = [tag.tag_name for tag in self.tags.all()]
         return tags
 
-    @property
     def clear_tags(self):
         """
         Clears all tags for an article
         """
-        [self.tags.remove(tag) for tag in self.tags.all()]
+        for tag in self.tags.all():
+            self.tags.remove(tag)
+            if not tag.articles:
+                tag.delete()

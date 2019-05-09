@@ -28,7 +28,6 @@ class ListCreateArticleAPIView(ListCreateAPIView):
         article["author"] = request.user.pk
         serializer = self.serializer_class(data=article)
         serializer.is_valid(raise_exception=True)
-        serializer.save(author=request.user)
         article = serializer.save(author=request.user)
         data = serializer.data
         if tag_names:
@@ -46,6 +45,17 @@ class ListCreateArticleAPIView(ListCreateAPIView):
         page_limit = request.GET.get('page_limit')
         if not page_limit:
             page_limit = 10
+        else:
+            invalid_response = Response(
+                data={
+                    "detail": "Invalid page limit"
+                },
+                status=status.HTTP_404_NOT_FOUND
+            )
+            if not page_limit.isdigit():
+                return invalid_response
+            elif int(page_limit) < 1:
+                return invalid_response
         articles = Article.objects.all()
         paginator = ArticlePaginator()
         paginator.page_size = page_limit
@@ -101,7 +111,7 @@ class RetrieveUpdateArticleAPIView(GenericAPIView):
             data = serializer.data
             tag_names = request.data.get("tags")
             if tag_names:
-                article.clear_tags
+                article.clear_tags()
                 add_tag_list(tag_names, article)
             data["tagList"] = article.tagList
             return Response(
@@ -129,6 +139,7 @@ class RetrieveUpdateArticleAPIView(GenericAPIView):
         article = self.retrieve_article(slug)
         user = request.user
         if article.author == user:
+            article.clear_tags()
             article.delete()
         else:
             return Response({"errors": {
