@@ -10,7 +10,7 @@ class TestArticles(BaseTest):
     slug2 = "this-is-mine"
     description = "I do not want it"
     updated = "Brian Koin is making noise"
-    msg = "Article deleted"
+    msg = "Article 'this is mine' deleted"
     error = "Article does not exist"
     unauthorized = "Cannot edit an article that is not yours"
     forbidden = "Cannot delete an article that is not yours"
@@ -28,9 +28,9 @@ class TestArticles(BaseTest):
         Test get all articles
         """
         response = self.get_all_articles()
+        res = response.data.get("results").get("articles")[0].get("slug")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data.get("results").get("articles")[0].get("slug"),
-                         self.slug2)
+        self.assertEqual(res, self.slug2)
 
     def test_successful_get_one_article(self):
         """
@@ -46,7 +46,7 @@ class TestArticles(BaseTest):
         Test update one article
         """
         response = self.update_article()
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data.get("article").get("description"),
                          self.updated)
 
@@ -91,3 +91,10 @@ class TestArticles(BaseTest):
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertEqual(response.data.get("errors").get("error")[0],
                          self.forbidden)
+
+    def test_image_upload(self):
+        """
+        Test successful upload image
+        """
+        response = self.save_image_to_file()
+        self.assertEqual(response.status_code, status.HTTP_200_OK)

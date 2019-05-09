@@ -11,7 +11,7 @@ from django_filters import rest_framework as filters
 from rest_framework.filters import SearchFilter
 
 from .exceptions import ArticleNotFound, Forbidden, ItemDoesNotExist
-from .models import Article, Comment, Favorite, RatingModel, Tag
+from .models import Article, Comment, Favorite, RatingModel, Tag, Image
 from .filters import ArticleFilter
 from .serializers import (ArticlePaginator, ArticleSerializer,
                           CommentChildSerializer, CommentDetailSerializer,
@@ -20,7 +20,7 @@ from .serializers import (ArticlePaginator, ArticleSerializer,
                           DisplaySingleComment,
                           FavoritesSerializer,
                           RatingSerializer,
-                          add_tag_list)
+                          add_tag_list, add_image)
 
 
 def get_serialiser_data(serializer_data, content):
@@ -79,6 +79,7 @@ class ListCreateArticleAPIView(ListCreateAPIView):
         Create an article
         """
         tag_names = request.data.get("tags")
+        images = request.FILES.getlist("images")
         article = request.data
         article["author"] = request.user.pk
         serializer = self.serializer_class(
@@ -89,6 +90,8 @@ class ListCreateArticleAPIView(ListCreateAPIView):
         serializer.is_valid(raise_exception=True)
         article = serializer.save(author=request.user)
         data = serializer.data
+        save_image = RetrieveUpdateArticleAPIView()
+        data["images"] = save_image.helpers(images, article)
         if tag_names:
             add_tag_list(tag_names, article)
         data["tagList"] = article.tagList
@@ -165,6 +168,17 @@ class RetrieveUpdateArticleAPIView(GenericAPIView):
                 status=status.HTTP_200_OK
             )
 
+    def helpers(self, images, article):
+        """
+        Helper function for Patch metod
+        """
+        if images:
+            image_list = []
+            for img in images:
+                img = add_image(article, img)
+                image_list.append(img)
+            return image_list
+
     def patch(self, request, slug):
         """
         Update an article
@@ -184,6 +198,8 @@ class RetrieveUpdateArticleAPIView(GenericAPIView):
             article = serializer.save()
             data = serializer.data
             tag_names = request.data.get("tags")
+            images = request.FILES.getlist("images")
+            self.helpers(images, article)
             if tag_names:
                 article.clear_tags()
                 add_tag_list(tag_names, article)
@@ -192,7 +208,7 @@ class RetrieveUpdateArticleAPIView(GenericAPIView):
                 data={
                     "article": data
                 },
-                status=status.HTTP_201_CREATED
+                status=status.HTTP_200_OK
             )
         else:
             return Response(
@@ -221,7 +237,8 @@ class RetrieveUpdateArticleAPIView(GenericAPIView):
                     "Cannot delete an article that is not yours"
                 ]}},
                 status.HTTP_403_FORBIDDEN)
-        return Response({"message": "Article deleted"},
+        return Response({
+                    "message": "Article '{}' deleted".format(article.title)},
                         status.HTTP_200_OK)
 
 

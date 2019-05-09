@@ -1,4 +1,7 @@
+from rest_framework import serializers
+from .models import Article, Favorite, Tag, Image, RatingModel, Comment
 import json
+from rest_framework.pagination import PageNumberPagination
 from collections import OrderedDict
 
 from django.db.models import Avg
@@ -6,11 +9,9 @@ from rest_framework import serializers
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 
-from authors.apps.articles.models import Tag
 from authors.utils.baseserializer import BaseSerializer
 
 from .exceptions import ArticleNotFound
-from .models import Article, Comment, Favorite, RatingModel
 
 
 class ArticleSerializer(BaseSerializer):
@@ -22,6 +23,10 @@ class ArticleSerializer(BaseSerializer):
         super(ArticleSerializer, self).__init__(*args, **kwargs)
 
     author = serializers.ReadOnlyField(source="get_author_details")
+    created_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S",
+                                           required=False)
+    updated_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S",
+                                           required=False)
 
     def get_user_article(self):
         request = self.context.get('request', None)
@@ -70,7 +75,7 @@ class ArticleSerializer(BaseSerializer):
             'slug', 'title', 'description', 'body', 'created_at',
             'updated_at', 'author', 'tagList', 'like', 'dislike',
             'likesCount', 'dislikesCount', 'comments', 'favorite',
-            'favoritesCount', 'readtime'
+            'favoritesCount', 'readtime', 'images'
         )
 
 
@@ -84,6 +89,17 @@ def add_tag_list(tag_names, article):
                 tag_name=name.strip()
             )
             article.tags.add(tag)
+
+
+def add_image(article, images):
+    """
+    Add article images
+    """
+    article_images = Image.objects.create(
+        article=article,
+        image=images
+        )
+    return article_images.image.url
 
 
 class ArticlePaginator(PageNumberPagination):

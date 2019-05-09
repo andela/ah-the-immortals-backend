@@ -70,6 +70,11 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+FILE_UPLOAD_HANDLERS = [
+    'django.core.files.uploadhandler.MemoryFileUploadHandler',
+    'django.core.files.uploadhandler.TemporaryFileUploadHandler',
+]
+
 cloudinary.config(
     cloud_name=os.getenv('CLOUDINARY_NAME'),
     api_key=os.getenv('CLOUDINARY_KEY'),

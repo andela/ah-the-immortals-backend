@@ -52,17 +52,9 @@ class Article(VoteModel, models.Model):
     tags = models.ManyToManyField(Tag)
     favorited = models.BooleanField(default=False)
     favoritesCount = models.PositiveSmallIntegerField(default=0)
-    image = CloudinaryField('image')
 
     class Meta:
         ordering = ['created_at', ]
-
-    def get_image(self):
-        """
-        Retrieve article image
-        """
-        image_url = CloudinaryImage(str(self.image)).build_url(crop='fill')
-        return image_url
 
     def get_author_details(self):
         """
@@ -104,6 +96,14 @@ class Article(VoteModel, models.Model):
     def readtime(self):
         timer = ArticleTimer(self)
         return timer.get_read_time()
+
+    def images(self):
+        """
+        Gets all images for an article
+        """
+        image = Image.objects.filter(article__pk=self.pk)
+        images = [img.image.url for img in image]
+        return images
 
 
 class Comment(models.Model):
@@ -213,3 +213,12 @@ class RatingModel(models.Model):
             "created_at": self.article.created_at,
             "updated_at": self.article.updated_at
         }
+
+
+class Image(models.Model):
+    """
+    Model for images
+    """
+    article = models.ForeignKey(Article, on_delete=models.CASCADE)
+    image = models.ImageField(upload_to='images', default=None)
+    created_at = models.DateTimeField(auto_now_add=True)

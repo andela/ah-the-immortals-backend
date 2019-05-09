@@ -8,6 +8,8 @@ import json
 from authors.apps.articles.models import Article, Tag, Comment
 from django.conf import settings
 from authors.apps.articles.filters import ArticleFilter
+from PIL import Image
+import tempfile
 
 User = get_user_model()
 
@@ -147,6 +149,18 @@ class BaseTest(APITestCase):
                                  data=json.dumps(self.update),
                                  content_type="application/json")
 
+    def save_image_to_file(self):
+        """
+        Upload an image for an article
+        """
+        self.is_authenticated("adam@gmail.com", "@Us3r.com")
+        image = Image.new('RGBA', size=(80, 80), color=(255, 0, 0))
+        file = tempfile.NamedTemporaryFile(suffix='.png')
+        image.save(file)
+        with open(file.name, 'rb') as data:
+            return self.client.patch(self.articles_url, {"images": data},
+                                     format='multipart')
+
     def update_nonexistent_article(self):
         """
         Updacommentthat does not exist
@@ -211,7 +225,7 @@ class BaseTest(APITestCase):
             url,
             content_type="application/json"
         )
-        
+
     def delete_dislike(self, vote_type):
         """
         Like and Unlike

@@ -101,3 +101,5 @@ db.sqlite3
 .vscode/
 # migrations
 migrations/
+
+images/
