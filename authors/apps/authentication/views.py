@@ -58,8 +58,8 @@ class RegistrationAPIView(GenericAPIView):
                 "username": serializer.data.get("username"),
                 "token": serializer.data.get("token")
             },
-            "message": "Account created successfully. +\
-                Kindly check your email to verify your account."
+            "message":
+            "Account created successfully. Check your email."
         }
         return Response(message, status=status.HTTP_201_CREATED)
 

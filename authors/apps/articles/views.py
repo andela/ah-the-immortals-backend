@@ -1,18 +1,15 @@
-from rest_framework.exceptions import APIException
-from rest_framework.generics import ListCreateAPIView, GenericAPIView
+from django.shortcuts import render
+from rest_framework import permissions, status
+from rest_framework.exceptions import APIException, ValidationError
+from rest_framework.generics import GenericAPIView, ListCreateAPIView
+from rest_framework.permissions import AllowAny, IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
-from rest_framework import status, permissions
-from .exceptions import ArticleNotFound
-from rest_framework.permissions import IsAuthenticatedOrReadOnly, AllowAny
 
-from .models import Article, Tag, Favorite
-from .serializers import (
-    ArticleSerializer,
-    add_tag_list,
-    ArticlePaginator,
-    FavoritedArticlesSerializer,
-    FavoritesSerializer
-)
+from .exceptions import ArticleNotFound
+from .models import Article, Favorite, RatingModel, Tag
+from .serializers import (ArticlePaginator, ArticleSerializer,
+                          FavoritedArticlesSerializer, FavoritesSerializer,
+                          RatingSerializer, add_tag_list)
 
 
 class ListCreateArticleAPIView(ListCreateAPIView):
@@ -85,14 +82,14 @@ class RetrieveUpdateArticleAPIView(GenericAPIView):
     serializer_class = ArticleSerializer
 
     def retrieve_article(self, slug):
-        """
-        Fetch one article
-        """
-        try:
-            article = Article.objects.get(slug=slug)
-            return article
-        except Article.DoesNotExist:
-            raise ArticleNotFound
+            """
+            Fetch one article
+            """
+            try:
+                article = Article.objects.get(slug=slug)
+                return article
+            except Article.DoesNotExist:
+                raise ArticleNotFound
 
     def get(self, request, slug):
         """
@@ -342,3 +339,54 @@ class ListUserFavoriteArticlesView(GenericAPIView):
             data={"favorites": user_favorites},
             status=status.HTTP_200_OK
         )
+
+
+class RateArticleAPIView(GenericAPIView):
+    """
+    Rating an article from 0 - 5
+    """
+    permission_classes = (IsAuthenticatedOrReadOnly,)
+
+    query_set = RatingModel.objects.all()
+    serializer_class = RatingSerializer
+
+    def post(self, request, slug):
+        """
+        Method to post a rating on an article
+        """
+        rating_value = request.data
+        article_instance = RetrieveUpdateArticleAPIView()
+        article = article_instance.retrieve_article(slug)
+
+        if article.author == request.user:
+            raise ValidationError(
+                detail={
+                    "error": "Dang! You can't rate your own article"
+                }
+            )
+
+        try:
+            already_rated = RatingModel.objects.get(
+                rated_by=request.user, article=article)
+            serializer = self.serializer_class(
+                already_rated, data=rating_value)
+        except RatingModel.DoesNotExist:
+            serializer = self.serializer_class(data=rating_value)
+
+        serializer.is_valid(raise_exception=True)
+        serializer.save(article=article, rated_by=request.user)
+        articles = {
+            "slug": serializer.data['article']['slug'],
+            "title": serializer.data['article']['title'],
+            "description": serializer.data['article']['description'],
+            "body": serializer.data['article']['body'],
+            "created_at": serializer.data['article']['created_at'],
+            "updated_at": serializer.data['article']['updated_at']
+        }
+
+        articles.update({'ratings': {
+            "my_rating": serializer.data.get('rate'),
+            "average_rating": serializer.data.get('average_rating')
+        }})
+
+        return Response(articles, status=status.HTTP_201_CREATED)
