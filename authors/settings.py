@@ -49,10 +49,12 @@ INSTALLED_APPS = [
     'rest_framework_social_oauth2',
     'rest_framework.authtoken',
     'vote',
+    'notifications',
 
     'authors.apps.authentication',
     'authors.apps.core',
     'authors.apps.profiles',
+    'authors.apps.appnotifications',
     'authors.apps.articles',
 ]
 
@@ -279,3 +281,8 @@ EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
 EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS')
 DEFAULT_EMAIL = "noreply@authorsheaven.com"
 django_heroku.settings(locals())
+
+DJANGO_NOTIFICATIONS_CONFIG = {
+    'USE_JSONFIELD': True,
+    'SOFT_DELETE': True
+}

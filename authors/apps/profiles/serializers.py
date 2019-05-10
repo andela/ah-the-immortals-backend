@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
 from .models import Profile
-from authors.apps.utils.baseserializer import BaseSerializer
+from authors.utils.baseserializer import BaseSerializer
 
 
 class UserProfileSerializer(BaseSerializer):

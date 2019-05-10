@@ -24,13 +24,17 @@ authurls = include(('authors.apps.authentication.urls',
                     'authentication'), namespace='authentication')
 profileurls = include(('authors.apps.profiles.urls',
                        'profiles'), namespace='profile')
+notificationsurls = include('authors.apps.appnotifications.urls',
+                            namespace="notifications")
 articleurls = include(('authors.apps.articles.urls', 'articles'),
                       namespace='article')
 urlpatterns = [
     path('admin/', admin.site.urls),
-    url(r'^api/', authurls),
+    path('api/', authurls),
     path('api/swagger/', schema_view),
     path('api/', profileurls),
+    path('api/', articleurls),
+    path('api/', notificationsurls),
     path('', RedirectView.as_view(url='/api/swagger/')),
     path('api/', articleurls),
 ]

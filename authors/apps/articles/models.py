@@ -8,6 +8,8 @@ from vote.models import VoteModel
 
 from authors.apps.profiles.models import Profile
 import json
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 
 User = get_user_model()
 
@@ -45,10 +47,10 @@ class Article(VoteModel, models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     author = models.ForeignKey(User, on_delete=models.CASCADE)
-    image = CloudinaryField('image')
     tags = models.ManyToManyField(Tag)
     favorited = models.BooleanField(default=False)
     favoritesCount = models.PositiveSmallIntegerField(default=0)
+    image = CloudinaryField('image')
 
     class Meta:
         ordering = ['created_at', ]
@@ -71,6 +73,11 @@ class Article(VoteModel, models.Model):
             "following": self.author.profile.following.reverse
         }
 
+    def get_favorited(self):
+        favorite = self.favorited
+        favorite = True
+        return favorite
+
     @property
     def tagList(self):
         """
@@ -87,44 +94,6 @@ class Article(VoteModel, models.Model):
             self.tags.remove(tag)
             if not tag.articles:
                 tag.delete()
-        [self.tags.remove(tag) for tag in self.tags.all()]
-
-    def get_favorited(self):
-        favorite = self.favorited
-        favorite = True
-        return favorite
-
-
-class Favorite(models.Model):
-    """
-    A class model for storing user fovorites and articles
-    """
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    article = models.ForeignKey(Article, on_delete=models.CASCADE)
-
-
-class RatingModel(models.Model):
-    """
-    Models for rating an article (0 - 5)
-    """
-    article = models.ForeignKey(
-        Article, related_name='rated_article', on_delete=models.CASCADE)
-    rated_by = models.ForeignKey(
-        User, related_name='rated_by', on_delete=models.CASCADE)
-    rate = models.IntegerField(default=0)
-
-    def get_articles_details(self):
-        """
-        Fetch relevant articles details
-        """
-        return {
-            "slug": self.article.slug,
-            "title": self.article.title,
-            "description": self.article.description,
-            "body": self.article.body,
-            "created_at": self.article.created_at,
-            "updated_at": self.article.updated_at
-        }
 
 
 class Comment(models.Model):
@@ -158,9 +127,36 @@ class Comment(models.Model):
         """
         get author's Profile
         """
+        return Article.get_author_details(self)
+
+
+class Favorite(models.Model):
+    """
+    A class model for storing user fovorites and articles
+    """
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    article = models.ForeignKey(Article, on_delete=models.CASCADE)
+
+
+class RatingModel(models.Model):
+    """
+    Models for rating an article (0 - 5)
+    """
+    article = models.ForeignKey(
+        Article, related_name='rated_article', on_delete=models.CASCADE)
+    rated_by = models.ForeignKey(
+        User, related_name='rated_by', on_delete=models.CASCADE)
+    rate = models.IntegerField(default=0)
+
+    def get_articles_details(self):
+        """
+        Fetch relevant articles details
+        """
         return {
-            "username": self.author.username,
-            "bio": self.author.profile.bio,
-            "image": self.author.profile.fetch_image,
-            "following": self.author.profile.following.reverse
+            "slug": self.article.slug,
+            "title": self.article.title,
+            "description": self.article.description,
+            "body": self.article.body,
+            "created_at": self.article.created_at,
+            "updated_at": self.article.updated_at
         }

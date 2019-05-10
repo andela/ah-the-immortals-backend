@@ -82,6 +82,9 @@ class BaseTest(APITestCase):
         }
         self.user = self.is_authenticated("adam@gmail.com", "@Us3r.com")
         self.other_user = self.is_authenticated("jim@gmail.com", "@Us3r.com")
+        self.comment = {
+            "body": "This is a test comment"
+        }
 
     def login(self, email, password):
         """
@@ -108,7 +111,7 @@ class BaseTest(APITestCase):
         """if
         Create a new article
         """
-        self.user
+        self.is_authenticated("adam@gmail.com", "@Us3r.com")
         return self.client.post(self.article_url,
                                 data=json.dumps(self.new_article),
                                 content_type="application/json")
@@ -218,6 +221,15 @@ class BaseTest(APITestCase):
             content_type="application/json"
         )
 
+    def get_token(self):
+        """
+        Method to generate token
+        """
+        user = self.user1
+        token, created = Token.objects.get_or_create(user=user)
+        token = token.key
+        return token
+
     def post_favorite(self):
         """
         A method to favorite an article
@@ -232,7 +244,17 @@ class BaseTest(APITestCase):
                     "user": self.user1.id
                 }
             ),
-            content_type="application/json"
+            content_type="application/json")
+        return self.client.post(url)
+
+    def post_comment(self):
+        """
+        Method to post comments
+        """
+        slug = str(self.article.slug)
+        url = reverse("articles:comment", args=[slug])
+        return self.client.post(
+            url, self.comment
         )
 
     def post_favorite_slug_doesnotexist(self):
@@ -284,6 +306,58 @@ class BaseTest(APITestCase):
             url,
             content_type="application/json"
         )
+        return self.client.get(url)
+
+    def create_comment(self):
+        """if
+        Create a new comment
+        """
+        self.user
+        return self.client.post(self.comments_url,
+                                data=json.dumps(self.new_comment),
+                                content_type="application/json")
+
+    def create_comment_fail(self):
+        """if
+        Create a new comment
+        """
+        self.user
+        return self.client.post(self.comments_url_fail,
+                                data=json.dumps(self.new_comment),
+                                content_type="application/json")
+
+    def get_all_comments(self):
+        """
+        Return all comments
+        """
+        self.user
+        return self.client.get(self.comments_url)
+
+    def get_one_comment(self):
+        """
+        Return all comments
+        """
+        self.user
+        return self.client.get(self.commentsdetail_url_delete)
+
+    def delete_comment(self):
+        """
+        Delete a comment unsuccefully
+        """
+        self.is_authenticated("adam@gmail.com", "@Us3r.com")
+        return self.client.delete(self.commentsdetail_url)
+
+    def update_comment_unsuccefully(self):
+        """if
+        Create a new comment
+        """
+        commentsdetail_url_delete = reverse(
+            "articles:commentdetail", args=["this-is-mine", 998989])
+
+        self.user
+        return self.client.post(commentsdetail_url_delete,
+                                data=json.dumps(self.update_comment),
+                                content_type="application/json")
 
     def rate_article(self):
         """
@@ -666,3 +740,7 @@ class PagniationBaseTest(APITestCase):
             format='json'
         )
         return response
+        return self.client.delete(self.modify_url)
+        self.user
+        return self.client.patch(self.modify_url, data=json.dumps(self.update),
+                                 content_type="application/json")
