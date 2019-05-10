@@ -1,15 +1,16 @@
 import json
 from collections import OrderedDict
 
-from authors.apps.articles.models import Tag
-from authors.apps.utils.baseserializer import BaseSerializer
 from django.db.models import Avg
 from rest_framework import serializers
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 
+from authors.apps.articles.models import Tag
+from authors.apps.utils.baseserializer import BaseSerializer
+
 from .exceptions import ArticleNotFound
-from .models import Article, Favorite, RatingModel
+from .models import Article, Comment, Favorite, RatingModel
 
 
 class ArticleSerializer(BaseSerializer):
@@ -115,6 +116,8 @@ class FavoritesSerializer(serializers.ModelSerializer):
         fields = (
             'user', 'article'
         )
+
+
 class RatingSerializer(ArticleSerializer):
     """
     Serializer class to rate an article
@@ -149,3 +152,45 @@ class RatingSerializer(ArticleSerializer):
         if average_rate["rate"]:
             return float('%.2f' % (average_rate["rate"]))
         return 0
+
+
+class CommentSerializer(serializers.ModelSerializer):
+    """
+    Comments serializer
+    """
+    class Meta:
+        model = Comment
+        fields = ('id', 'body', 'created_at',
+                  'article', 'author', 'parent')
+
+
+class CommentChildSerializer(serializers.ModelSerializer):
+    """
+    child Comments serializer
+    """
+    author = serializers.ReadOnlyField(source="get_profile_details")
+
+    class Meta:
+        model = Comment
+        fields = ('id', 'body', 'created_at', 'author', 'parent')
+
+
+class CommentDetailSerializer(serializers.ModelSerializer):
+    """
+    Comments with replies serializer
+    """
+    replies = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Comment
+        fields = ('id', 'author', 'body', 'article',
+                  'created_at', 'replies', 'parent')
+
+    @staticmethod
+    def get_replies(obj):
+        """
+        utility function to get replies
+        """
+        if obj.is_parent:
+            return CommentChildSerializer(obj.children(), many=True).data
+        return None

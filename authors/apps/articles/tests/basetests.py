@@ -5,7 +5,7 @@ from rest_framework.test import APITestCase, APIClient
 from rest_framework.reverse import reverse
 from rest_framework.authtoken.models import Token
 import json
-from authors.apps.articles.models import Article, Tag
+from authors.apps.articles.models import Article, Tag, Comment
 from django.conf import settings
 
 User = get_user_model()
@@ -22,6 +22,17 @@ class BaseTest(APITestCase):
         self.article_url = reverse("articles:article")
         self.articles_url = reverse("articles:articles", args=["this-is-mine"])
         self.nonexistent_url = reverse("articles:articles", args=["not-found"])
+        self.comments_url = reverse("articles:comment", args=["this-is-mine"])
+        self.comments_url_fail = reverse(
+            "articles:comment", args=["nof"])
+        self.commentsdetail_url = reverse(
+            "articles:commentdetail", args=["this-is-mine", 877777])
+        self.commentsdetail_url_delete = reverse(
+            "articles:commentdetail", args=["this-is-mine", 1])
+        self.comments_url_not_found = reverse(
+            "articles:comment", args=["not-found"])
+        self.commentsdetail_url_one_comment = reverse(
+            "articles:commentdetail", args=["this-is-mine", 18])
 
         self.user1 = User.objects.create_user(
             username="adam",
@@ -51,8 +62,23 @@ class BaseTest(APITestCase):
             image='image/upload/v1557052449/tt30hqlfc3eaflfqtobo.jpg'
         )
         self.article.save()
+        self.comment = Comment.objects.create(
+            article=self.article,
+            author=self.user1,
+            body='this is a test body'
+        )
+        self.comment.save()
         self.update = {
             "description": "Brian Koin is making noise"
+        }
+        self.update_comment = {
+            "body": "this is a test update"
+        }
+        self.new_comment = {
+            "body": "this is another test comment"
+        }
+        self.new_child_comment = {
+            "body": "this is a child test comment"
         }
         self.user = self.is_authenticated("adam@gmail.com", "@Us3r.com")
         self.other_user = self.is_authenticated("jim@gmail.com", "@Us3r.com")
@@ -79,7 +105,7 @@ class BaseTest(APITestCase):
             HTTP_AUTHORIZATION='Bearer ' + token)
 
     def create_article(self):
-        """
+        """if
         Create a new article
         """
         self.user
@@ -118,7 +144,7 @@ class BaseTest(APITestCase):
 
     def update_nonexistent_article(self):
         """
-        Update an article that does not exist
+        Updacommentthat does not exist
         """
         self.user
         return self.client.patch(self.nonexistent_url,
@@ -326,7 +352,115 @@ class BaseTest(APITestCase):
             data=json.dumps({
                 "rate": 4
             }),
-            content_type="application/json"
+            content_type="application/json")
+
+    def create_comment(self):
+        """if
+        Create a new comment
+        """
+        self.user
+        return self.client.post(self.comments_url,
+                                data=json.dumps(self.new_comment),
+                                content_type="application/json")
+
+    def create_child_comment(self):
+        """if
+        Create a new child comment
+        """
+        self.user
+        parent_comment = self.create_comment()
+        id = parent_comment.data['id']
+        return self.client.post(reverse(
+            "articles:commentdetail", args=["this-is-mine", id]),
+            data=json.dumps(self.new_comment),
+            content_type="application/json")
+
+    def create_child_comment_not_found(self):
+        """if
+        Create a new child comment
+        """
+        self.user
+        self.create_comment()
+        return self.client.post(self.commentsdetail_url_delete,
+                                data=json.dumps(self.new_comment),
+                                content_type="application/json")
+
+    def create_comment_fail(self):
+        """if
+        Create a new comment
+        """
+        self.user
+        return self.client.post(self.comments_url_fail,
+                                data=json.dumps(self.new_comment),
+                                content_type="application/json")
+
+    def get_all_comments(self):
+        """
+        Return all comments
+        """
+        self.user
+        return self.client.get(self.comments_url)
+
+    def get_comments_by_id(self):
+        """
+        Return  comments by id
+        """
+        self.user
+        return self.client.get(self.commentsdetail_url_one_comment)
+
+    def get_one_comment(self):
+        """
+        Return one comment
+        """
+        self.user
+        return self.client.get(self.commentsdetail_url_delete)
+
+    def get_one_comment_not_found(self):
+        """
+        Return not found comment
+        """
+        self.user
+        return self.client.get(self.comments_url_not_found)
+
+    def delete_comment(self):
+        """
+        Delete a comment unsuccefully
+        """
+        self.is_authenticated("adam@gmail.com", "@Us3r.com")
+        return self.client.delete(self.commentsdetail_url)
+
+    def update_comment_unsuccefully(self):
+        """if
+        Create a new comment
+        """
+        commentsdetail_url_delete = reverse(
+            "articles:commentdetail", args=["this-is-mine", 998989])
+
+        self.user
+        return self.client.put(commentsdetail_url_delete,
+                               data=json.dumps(self.update_comment),
+                               content_type="application/json")
+
+    def update_comment_succefully(self):
+        """if
+        update a comment
+        """
+        parent_comment = self.create_comment()
+        id = parent_comment.data['id']
+        return self.client.put(reverse(
+            "articles:commentdetail", args=["this-is-mine", id]),
+            data=json.dumps(self.update_comment),
+            content_type="application/json")
+
+    def delete_comment_succefully(self):
+        """if
+        update a comment
+        """
+        self.is_authenticated("adam@gmail.com", "@Us3r.com")
+        parent_comment = self.create_comment()
+        id = parent_comment.data['id']
+        return self.client.delete(reverse(
+            "articles:commentdetail", args=["this-is-mine", id]),
         )
 
 

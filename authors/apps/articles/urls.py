@@ -1,9 +1,10 @@
 from django.conf.urls import url
 from django.urls import path
 
-from .views import (FavoritesView, FetchTags, LikeDislikeView,
-                    ListCreateArticleAPIView, ListUserFavoriteArticlesView,
-                    RateArticleAPIView, RetrieveUpdateArticleAPIView)
+from .views import (CommentAPIView, CommentDetailAPIView, FavoritesView,
+                    FetchTags, LikeDislikeView, ListCreateArticleAPIView,
+                    ListUserFavoriteArticlesView, RateArticleAPIView,
+                    RetrieveUpdateArticleAPIView)
 
 app_name = 'articles'
 
@@ -20,4 +21,8 @@ urlpatterns = [
          ListUserFavoriteArticlesView.as_view(), name='get_favorite'),
     path('articles/<slug>/rate/',
          RateArticleAPIView.as_view(), name='rating_articles'),
+    path('articles/<slug>/comments/',
+         CommentAPIView.as_view(), name='comment'),
+    path('articles/<slug>/comments/<id>/',
+         CommentDetailAPIView.as_view(), name='commentdetail')
 ]

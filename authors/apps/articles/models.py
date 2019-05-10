@@ -125,3 +125,42 @@ class RatingModel(models.Model):
             "created_at": self.article.created_at,
             "updated_at": self.article.updated_at
         }
+
+
+class Comment(models.Model):
+    """
+    model for  comments
+    """
+    article = models.ForeignKey(Article, on_delete=models.CASCADE)
+    author = models.ForeignKey(User, on_delete=models.CASCADE)
+    body = models.TextField(null=False, blank=False)
+    parent = models.ForeignKey(
+        'self', null=True, blank=True, on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return self.body
+
+    def children(self):
+        return Comment.objects.filter(parent=self)
+
+    @property
+    def is_parent(self):
+        if self.parent is not None:
+            return False
+        return True
+
+    def get_profile_details(self):
+        """
+        get author's Profile
+        """
+        return {
+            "username": self.author.username,
+            "bio": self.author.profile.bio,
+            "image": self.author.profile.fetch_image,
+            "following": self.author.profile.following.reverse
+        }
