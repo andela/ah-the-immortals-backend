@@ -742,10 +742,6 @@ class PagniationBaseTest(APITestCase):
             format='json'
         )
         return response
-        return self.client.delete(self.modify_url)
-        self.user
-        return self.client.patch(self.modify_url, data=json.dumps(self.update),
-                                 content_type="application/json")
 
 
 class FilterBaseTest(TagsBaseTest):
