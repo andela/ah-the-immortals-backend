@@ -1,7 +1,8 @@
 from rest_framework.exceptions import APIException
 from rest_framework.generics import ListCreateAPIView, GenericAPIView
 from rest_framework.response import Response
-from rest_framework import status
+from rest_framework import status, permissions
+
 from .exceptions import ArticleNotFound
 from rest_framework.permissions import IsAuthenticatedOrReadOnly, AllowAny
 from .models import Article, Tag
@@ -26,7 +27,10 @@ class ListCreateArticleAPIView(ListCreateAPIView):
         tag_names = request.data.get("tags")
         article = request.data
         article["author"] = request.user.pk
-        serializer = self.serializer_class(data=article)
+        serializer = self.serializer_class(
+            data=article,
+            remove_fields=['like', 'created_at', 'updated_at',
+                           'dislike', 'likesCount', 'dislikesCount'])
         serializer.is_valid(raise_exception=True)
         article = serializer.save(author=request.user)
         data = serializer.data
@@ -60,7 +64,11 @@ class ListCreateArticleAPIView(ListCreateAPIView):
         paginator = ArticlePaginator()
         paginator.page_size = page_limit
         result = paginator.paginate_queryset(articles, request)
-        serializer = ArticleSerializer(result, many=True)
+        serializer = ArticleSerializer(result, many=True,
+                                       remove_fields=['like',
+                                                      'dislike',
+                                                      'likesCount',
+                                                      'dislikesCount'])
         response = paginator.get_paginated_response({
             "articles": serializer.data
         })
@@ -90,9 +98,15 @@ class RetrieveUpdateArticleAPIView(GenericAPIView):
         """
         article = self.retrieve_article(slug)
         if article:
-            serializer = ArticleSerializer(article, many=False)
-            return Response({"article": serializer.data},
-                            status=status.HTTP_200_OK)
+            serializer = ArticleSerializer(
+                article,
+                context={'article': slug, 'request': request},
+                many=False
+            )
+            return Response(
+                {"article": serializer.data},
+                status=status.HTTP_200_OK
+            )
 
     def patch(self, request, slug):
         """
@@ -104,7 +118,9 @@ class RetrieveUpdateArticleAPIView(GenericAPIView):
             serializer = ArticleSerializer(
                 instance=article,
                 data=request.data,
-                partial=True
+                partial=True,
+                remove_fields=['like', 'created_at', 'updated_at',
+                               'dislike', 'likesCount', 'dislikesCount']
             )
             serializer.is_valid(raise_exception=True)
             article = serializer.save()
@@ -179,3 +195,61 @@ class FetchTags(GenericAPIView):
                 status=status.HTTP_200_OK
             )
         return response
+
+
+class LikeDislikeView(GenericAPIView):
+    """
+    A generic class to like and dislike articles
+    """
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = ArticleSerializer
+
+    def post(self, request, slug, vote_type):
+        """
+        A method to post a likes
+        """
+        article_inst = RetrieveUpdateArticleAPIView()
+        article = article_inst.retrieve_article(slug)
+
+        vote_type_list = ["like", "dislike"]
+        if vote_type not in vote_type_list:
+            return Response({
+                'errors': {
+                    'vote_verb': ['Vote verb specified does not exist']
+                }
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        def get_vot_response(votetype):
+            if vote_type == "dislike":
+                article.votes.down(request.user.id)
+                return_string = "Dislike posted successfully"
+            else:
+                article.votes.up(request.user.id)
+                return_string = "Like posted successfully"
+            return return_string
+        serializer = ArticleSerializer(
+            article,
+            context={'article': slug, 'request': request, },
+            many=False)
+        vote_resp = get_vot_response(vote_type)
+        response = Response({
+            "article": serializer.data,
+            "message": vote_resp
+        }, status=status.HTTP_200_OK)
+
+        return response
+
+    def delete(self, request, slug, vote_type):
+        """
+        A method to delete a vote for a certain article
+        """
+        article = RetrieveUpdateArticleAPIView().retrieve_article(slug)
+        if article.votes.delete(request.user.id):
+            return Response({
+                "message": ["Vote delete successfully"]
+            }, status=status.HTTP_200_OK)
+        return Response({
+            'errors': {
+                'error': 'You have not liked/disliked this article'
+            }
+        }, status=status.HTTP_404_NOT_FOUND)
