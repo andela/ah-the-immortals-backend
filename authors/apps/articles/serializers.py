@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Article
+from .models import Article, Favorite
 import json
 from authors.apps.articles.models import Tag
 from rest_framework.pagination import PageNumberPagination
@@ -85,3 +85,30 @@ class ArticlePaginator(PageNumberPagination):
             ('previous', self.get_previous_link()),
             ('results', data)
         ]))
+
+
+class FavoritedArticlesSerializer(serializers.ModelSerializer):
+    """
+    A class to fetch all favorited articles
+    """
+    favorited = serializers.ReadOnlyField(source="get_favorited")
+    author = serializers.ReadOnlyField(source="get_author_details")
+
+    class Meta:
+        model = Article
+        fields = (
+            'slug', 'title', 'description', 'body',
+            'created_at', 'favorited', 'favoritesCount',
+            'updated_at', 'author'
+        )
+
+
+class FavoritesSerializer(serializers.ModelSerializer):
+    """
+    A class to serialize favorite article and user
+    """
+    class Meta:
+        model = Favorite
+        fields = (
+            'user', 'article'
+        )

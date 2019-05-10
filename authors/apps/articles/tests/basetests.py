@@ -69,6 +69,7 @@ class BaseTest(APITestCase):
     def is_authenticated(self, email, password):
         """
         Authenticate user
+
         """
         login_details = self.login(email, password)
         token = login_details.data['token']
@@ -144,7 +145,7 @@ class BaseTest(APITestCase):
         """
         self.other_user
         return self.client.delete(self.articles_url)
-    
+
     def like_dislike_article(self, vote_type):
         """
         Like an article
@@ -188,6 +189,74 @@ class BaseTest(APITestCase):
             url,
             content_type="application/json"
         )
+
+    def post_favorite(self):
+        """
+        A method to favorite an article
+        """
+        slug = str(self.article.slug)
+        url = reverse("articles:favorite", args=[slug])
+        return self.client.post(
+            url,
+            data=json.dumps(
+                {
+                    "article": self.article.id,
+                    "user": self.user1.id
+                }
+            ),
+            content_type="application/json"
+        )
+
+    def post_favorite_slug_doesnotexist(self):
+        """
+        A method to favorite an article
+        """
+        slug = "i-love-this"
+        url = reverse("article:favorite", args=[slug])
+        return self.client.post(
+            url,
+            data=json.dumps(
+                {
+                    "article": self.article.id,
+                    "user": self.user1.id
+                }
+            ),
+            content_type="application/json"
+        )
+
+    def delete_favorite(self):
+        """
+        A method to remove articles from favorites
+        """
+
+        slug = str(self.article.slug)
+        url = reverse("articles:favorite", args=[slug])
+        return self.client.delete(
+            url,
+            content_type="application/json"
+        )
+
+    def delete_favorite_invalidslug(self):
+        """
+        A method to favorite an article
+        """
+        slug = "i-love-this"
+        url = reverse("articles:favorite", args=[slug])
+        return self.client.delete(
+            url,
+            content_type="application/json"
+        )
+
+    def get_favorites(self):
+        """
+        A method to get all user favorite articles
+        """
+        url = reverse("articles:get_favorite")
+        return self.client.get(
+            url,
+            content_type="application/json"
+        )
+
 
 class TagsBaseTest(APITestCase):
     """
@@ -341,12 +410,12 @@ class PagniationBaseTest(APITestCase):
         Generates 20 articles
         """
         for i in range(21):
-             Article.objects.create(
-                 title="Talk Like TED",
-                 description="Tehcnology, Education and Design",
-                 body="To make your speech stand out you need to make it novel",
-                 author=self.user
-             )
+            Article.objects.create(
+                title="Talk Like TED",
+                description="Tehcnology, Education and Design",
+                body="To make your speech stand out you need to make it novel",
+                author=self.user
+            )
 
     def get_articles_per_page(self, page=1, page_limit=None):
         """
