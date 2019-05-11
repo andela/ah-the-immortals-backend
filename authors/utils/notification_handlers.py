@@ -22,14 +22,10 @@ def create_article_handler(sender, instance, created, **kwargs):
     title = instance.title
     article_author = instance.author.profile
     followers = article_author.followers_list()
-    subscribers = [
-        user for user in followers if
-        user.user.notification_preferences.in_app_notifications_subscription
-        is True]
 
-    if not subscribers:
+    if not followers:
         return
-    for user in subscribers:
+    for user in followers:
 
         url = reverse(
             "articles:articles", args=[instance.slug])
@@ -57,6 +53,7 @@ def create_email_notification_handler(sender, instance, created, **kwargs):
     if send is False:
         return
     description = instance.description
+    instance.emailed = True
     token, created = Token.objects.get_or_create(user=user)
     if not created:
         token.created = timezone.now()
@@ -93,9 +90,7 @@ def comment_handler(sender, instance, created, **kwargs):
     favourited = Favorite.objects.filter(article=article)
     for user in favourited:
         email = user.user
-        sub = email.notification_preferences.in_app_notifications_subscription
-        if sub:
-            recipients.append(email)
+        recipients.append(email)
     description_string = "{} posted a comment to {} on {}"
     url = reverse(
         "articles:articles", args=[article.slug])
@@ -110,7 +105,8 @@ def comment_handler(sender, instance, created, **kwargs):
                 target=article or instance,
                 verb=verbs.COMMENT_CREATED,
                 action_object=instance,
-                resource_url=resource_url)
+                resource_url=resource_url
+                )
 
 
 post_save.connect(create_email_notification_handler, sender=Notification)
