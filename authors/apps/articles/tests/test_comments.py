@@ -1,6 +1,9 @@
-from rest_framework import status
-from .basetests import BaseTest
 import json
+from rest_framework import status
+
+from authors.apps.articles.models import Comment
+
+from .basetests import BaseTest
 
 
 class TestComments(BaseTest):
@@ -13,6 +16,8 @@ class TestComments(BaseTest):
     msgg = 'unsuccesful update either the comment orslug not found'
     message = 'Comment deleted successfully'
     no_update = 'unsuccesful update either the comment orslug not found'
+    no_comment = 'no comments on this article'
+    no_comment_with_id = 'This article does not have a comment withthat id'
 
     def test_successful_comment_creation(self):
         """
@@ -90,7 +95,10 @@ class TestComments(BaseTest):
         Test one comment
         """
         response = self.get_all_comments()
+        comment = Comment.objects.all()[0]
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data.get(
+            'comments')[0].get('body'), comment.body)
 
     def test_get_one_comment_not_found(self):
         """
@@ -98,11 +106,25 @@ class TestComments(BaseTest):
         """
         response = self.get_one_comment_not_found()
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
-        self.assertEqual(response.data["detail"], self.msg)
+        self.assertEqual(json.loads(response.content), {
+                         'comments': self.no_comment})
 
-    def test_successful_get_one_comment_by_id(self):
+    def test_unsuccessful_get_one_comment_by_id(self):
+        """
+        Test unsuccessful get one comment
+        """
+        response = self.get_comments_by_id()
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(json.loads(response.content), {
+                         'comments': self.no_comment_with_id})
+
+    def test_get_one_comment(self):
         """
         Test one comment
         """
-        response = self.get_comments_by_id()
+        response = self.get_comment_by_id()
+        comment = Comment.objects.all()[0]
+        # comment_id = comment.id
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data.get(
+            'comment').get('body'), comment.body)

@@ -61,7 +61,7 @@ class ArticleSerializer(BaseSerializer):
         fields = (
             'slug', 'title', 'description', 'body', 'created_at',
             'updated_at', 'author', 'tagList', 'like', 'dislike',
-            'likesCount', 'dislikesCount'
+            'likesCount', 'dislikesCount', 'comments'
         )
 
 
@@ -163,6 +163,24 @@ class CommentSerializer(serializers.ModelSerializer):
         model = Comment
         fields = ('id', 'body', 'created_at',
                   'article', 'author', 'parent')
+
+
+class DisplayCommentsSerializer(serializers.ModelSerializer):
+    """
+    Serializer for rendering comments
+    """
+    class Meta:
+        model = Article
+        fields = ("comments",)
+
+
+class DisplaySingleComment(serializers.ModelSerializer):
+    """
+    Serializes single representation of any comment
+    """
+    class Meta:
+        model = Comment
+        fields = ("representation",)
 
 
 class CommentChildSerializer(serializers.ModelSerializer):

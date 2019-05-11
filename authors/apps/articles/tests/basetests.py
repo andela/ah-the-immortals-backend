@@ -86,6 +86,7 @@ class BaseTest(APITestCase):
         self.comment = {
             "body": "This is a test comment"
         }
+        self.maxDiff = None
 
     def login(self, email, password):
         """
@@ -537,6 +538,15 @@ class BaseTest(APITestCase):
         return self.client.delete(reverse(
             "articles:commentdetail", args=["this-is-mine", id]),
         )
+
+    def get_comment_by_id(self):
+        """if
+        update a comment
+        """
+        parent_comment = self.create_comment()
+        id = parent_comment.data['id']
+        return self.client.get(reverse(
+            "articles:commentdetail", args=["this-is-mine", id]))
 
 
 class TagsBaseTest(APITestCase):

@@ -15,8 +15,51 @@ from .models import Article, Comment, Favorite, RatingModel, Tag
 from .filters import ArticleFilter
 from .serializers import (ArticlePaginator, ArticleSerializer,
                           CommentChildSerializer, CommentDetailSerializer,
-                          CommentSerializer, FavoritedArticlesSerializer,
+                          CommentSerializer,
+                          FavoritedArticlesSerializer,
+                          DisplayCommentsSerializer,
+                          DisplaySingleComment,
                           FavoritesSerializer, RatingSerializer, add_tag_list)
+
+
+def get_serialiser_data(serializer_data, content):
+    """
+    Gets serializer information from content
+    """
+    response = None
+    if serializer_data.data:
+        data = serializer_data.data[0].get(content)
+        if content == "comments":
+            response = Response(
+                data={
+                    "comments": data
+                },
+                status=status.HTTP_200_OK
+            )
+        else:
+            response = Response(
+                data={
+                    "comment": data
+                },
+                status=status.HTTP_200_OK
+            )
+    else:
+        if content == "comments":
+            response = Response(
+                data={
+                    "comments": "no comments on this article"
+                },
+                status=status.HTTP_404_NOT_FOUND
+            )
+        else:
+            response = Response(
+                data={
+                    "comments": "This article does not have a comment with"
+                    "that id"
+                },
+                status=status.HTTP_404_NOT_FOUND
+            )
+    return response
 
 
 class ListCreateArticleAPIView(ListCreateAPIView):
@@ -78,7 +121,8 @@ class ListCreateArticleAPIView(ListCreateAPIView):
                                        remove_fields=['like',
                                                       'dislike',
                                                       'likesCount',
-                                                      'dislikesCount'])
+                                                      'dislikesCount',
+                                                      'comments'])
         response = paginator.get_paginated_response({
             "articles": serializer.data
         })
@@ -437,15 +481,14 @@ class CommentAPIView(GenericAPIView):
         """
          Get multiple comments
         """
-        self.serializer_class = CommentChildSerializer
-        try:
-            article = Article.objects.get(slug=slug)
-            article_id = article.id
-            comment = Comment.objects.all().filter(article_id=article_id)
-            serializer = self.serializer_class(comment, many=True)
-            return Response({'comments': serializer.data}, status.HTTP_200_OK)
-        except Article.DoesNotExist:
-            raise ItemDoesNotExist
+        self.serializer_class = DisplayCommentsSerializer
+
+        article = Article.objects.filter(slug=slug)
+        serializer = self.serializer_class(article, many=True)
+        data = {}
+        response = None
+        response = get_serialiser_data(serializer, "comments")
+        return response
 
 
 class CommentDetailAPIView(GenericAPIView):
@@ -456,10 +499,13 @@ class CommentDetailAPIView(GenericAPIView):
         """
         get a comment
         """
-
-        comment = Comment.objects.all().filter(id=id)
+        self.serializer_class = DisplaySingleComment
+        comment = Comment.objects.all().filter(id=id, article__slug=slug)
         serializer = self.serializer_class(comment, many=True)
-        return Response({"comment": serializer.data}, status.HTTP_200_OK)
+        data = None
+        response = None
+        response = get_serialiser_data(serializer, "representation")
+        return response
 
     def post(self, request, slug, id):
         """
