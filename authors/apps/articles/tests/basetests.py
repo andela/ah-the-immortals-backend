@@ -7,6 +7,7 @@ from rest_framework.authtoken.models import Token
 import json
 from authors.apps.articles.models import Article, Tag, Comment
 from django.conf import settings
+from authors.apps.articles.filters import ArticleFilter
 
 User = get_user_model()
 
@@ -567,6 +568,7 @@ class TagsBaseTest(APITestCase):
             "articles:articles", args=[self.article.slug])
         self.tagList = ["Analysis", "Principia"]
         self.update_tags = ["analytica", "cambridge"]
+        self.tagList = ["Analysis", "Principia"]
         self.article_data = {
             "title": "Infiniteness of Reals",
             "description": "Real Analysis",
@@ -744,3 +746,109 @@ class PagniationBaseTest(APITestCase):
         self.user
         return self.client.patch(self.modify_url, data=json.dumps(self.update),
                                  content_type="application/json")
+
+
+class FilterBaseTest(TagsBaseTest):
+    def setUp(self):
+        super().setUp()
+        self.tag_objects = []
+        for name in self.tagList:
+            tag = Tag.objects.create(tag_name=name)
+            self.tag_objects.append(tag)
+        self.article = Article.objects.create(
+            title="Talk Like TED",
+            description="Tehcnology, Education and Design",
+            body="To make your speech stand out you need to make it novel",
+            author=self.user
+        )
+        for tag in self.tag_objects:
+            self.article.tags.add(tag)
+
+    def post_an_article(self):
+        """
+        A method for posting an article
+        """
+        response = self.client.post(
+            path=self.articles_url,
+            data=self.article_data,
+            format='json'
+        )
+        return response
+
+    def create_an_article(self):
+        """
+        method to creates article
+        """
+        self.authenticate_user()
+        response = self.post_an_article()
+        return response
+
+    def filter_by_author(self):
+        """
+        Filter by author
+        """
+        response = self.client.get((self.articles_url)
+                                   + '?author=' + 'mningauthor95',
+                                   format='json'
+                                   )
+        return response
+
+    def filter_by_non_author(self):
+        """
+        Filter by author
+        """
+        response = self.client.get((self.articles_url)
+                                   + '?author=' + 'philip',
+                                   format='json'
+                                   )
+        return response
+
+    def filter_by_tag(self):
+        """
+        Filter by tag
+        """
+        response = self.client.get((self.articles_url)
+                                   + '?tags=' + 'Analysis',
+                                   format='json'
+                                   )
+        return response
+
+    def filter_by_title(self):
+        """
+        Filter by title
+        """
+        response = self.client.get((self.articles_url)
+                                   + '?title=' + 'TED',
+                                   format='json'
+                                   )
+        return response
+
+    def filter_by_two_tags(self):
+        """
+        Filter by two tags
+        """
+        response = self.client.get((self.articles_url)
+                                   + '?tags=' + 'Analysis' + ',' + 'Principia',
+                                   format='json'
+                                   )
+        return response
+
+    def filter_title(self):
+        """
+        Filter by two tags
+        """
+        response = self.client.get((self.articles_url)
+                                   + '?title=' + 'ted',
+                                   format='json'
+                                   )
+        return response
+
+    def filter_by_tag_and_title(self):
+        """
+        Filter by tag
+        """
+        response = self.client.get((self.articles_url)
+                                   + '?tags=' + 'Analysis' + '?title=' + 'TED',
+                                   format='json'
+                                   )
+        return response

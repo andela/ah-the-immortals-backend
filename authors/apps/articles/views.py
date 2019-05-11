@@ -7,9 +7,12 @@ from rest_framework.permissions import (AllowAny, IsAuthenticated,
                                         IsAuthenticatedOrReadOnly)
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from django_filters import rest_framework as filters
+from rest_framework.filters import SearchFilter
 
 from .exceptions import ArticleNotFound, Forbidden, ItemDoesNotExist
 from .models import Article, Comment, Favorite, RatingModel, Tag
+from .filters import ArticleFilter
 from .serializers import (ArticlePaginator, ArticleSerializer,
                           CommentChildSerializer, CommentDetailSerializer,
                           CommentSerializer, FavoritedArticlesSerializer,
@@ -22,6 +25,10 @@ class ListCreateArticleAPIView(ListCreateAPIView):
     """
     permission_classes = (IsAuthenticatedOrReadOnly,)
     serializer_class = ArticleSerializer
+    queryset = Article.objects.all()
+    filter_backends = (filters.DjangoFilterBackend, SearchFilter)
+    filterset_class = ArticleFilter
+    search_fields = ('title')
 
     def create(self, request):
         """
@@ -63,7 +70,7 @@ class ListCreateArticleAPIView(ListCreateAPIView):
                 return invalid_response
             elif int(page_limit) < 1:
                 return invalid_response
-        articles = Article.objects.all()
+        articles = self.filter_queryset(self.get_queryset())
         paginator = ArticlePaginator()
         paginator.page_size = page_limit
         result = paginator.paginate_queryset(articles, request)

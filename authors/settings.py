@@ -56,6 +56,7 @@ INSTALLED_APPS = [
     'authors.apps.profiles',
     'authors.apps.appnotifications',
     'authors.apps.articles',
+    'django_filters',
 ]
 
 MIDDLEWARE = [
@@ -258,6 +259,9 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'authors.apps.authentication.backends.JWTAuthentication',
     ),
+    'DEFAULT_FILTER_BACKENDS': (
+        'django_filters.rest_framework.DjangoFilterBackend',
+    )
 }
 SWAGGER_SETTINGS = {
     'SHOW_REQUEST_HEADERS': True,
