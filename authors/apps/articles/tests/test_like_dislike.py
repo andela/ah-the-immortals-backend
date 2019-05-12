@@ -37,26 +37,27 @@ class TestLikeDislike(BaseTest):
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(response.data["detail"], "Article does not exist")
 
-    def test_wrong_verb_like_dislike(self):
-        """
-        Test for wrong verb like or dislike
-        """
-        self.is_authenticated("adam@gmail.com", "@Us3r.com")
-        response = self.like_dislike_article("dlike")
-        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
-        self.assertEqual(response.data.get("errors").get("vote_verb")[
-                         0], "Vote verb specified does not exist")
-
-    def test_delete_like_dislike(self):
+    def test_delete_like(self):
         """
         Test for deleting likes and dislikes
         """
         self.is_authenticated("adam@gmail.com", "@Us3r.com")
         self.like_dislike_article("like")
-        response = self.delete_like_dislike("dislike")
+        response = self.delete_like("like")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data.get("message")[
-                         0], "Vote delete successfully")
+                         0], "Like delete successfully")
+    
+    def test_delete_dislike(self):
+        """
+        Test for deleting likes and dislikes
+        """
+        self.is_authenticated("adam@gmail.com", "@Us3r.com")
+        self.like_dislike_article("dislike")
+        response = self.delete_dislike("dislike")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data.get("message")[
+                         0], "Dislike delete successfully")
 
     def test_delete_likes_dislikes_no_slug(self):
         """
@@ -73,8 +74,8 @@ class TestLikeDislike(BaseTest):
         """
         self.is_authenticated("adam@gmail.com", "@Us3r.com")
         self.like_dislike_article("like")
-        self.delete_like_dislike("dislike")
-        response = self.delete_like_dislike("dislike")
+        self.delete_dislike("dislike")
+        response = self.delete_dislike("dislike")
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(response.data.get("errors").get(
-            "error"), "You have not liked/disliked this article")
+            "error"), "You have not disliked this article")

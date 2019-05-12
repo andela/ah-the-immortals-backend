@@ -23,6 +23,18 @@ class ArticleSerializer(BaseSerializer):
 
     author = serializers.ReadOnlyField(source="get_author_details")
 
+    def get_user_article(self):
+        request = self.context.get('request', None)
+        slug = self.context.get('article', None)
+
+        if request.user.is_anonymous:
+            return ((False, None))
+
+        user = request.user.id
+        article = Article.objects.get(slug=slug).id
+
+        return (user, article)
+
     def get_likes_data(self):
         article = self.instance
         return article
@@ -41,27 +53,24 @@ class ArticleSerializer(BaseSerializer):
         like = self.get_likes(1)
         return like
 
-    def get_likesCount(self, obj):
-        article = self.get_likes_data()
-        like_count = article.num_vote_up
-        return like_count
-
-    def get_dislikesCount(self, obj):
-        article = self.get_likes_data()
-        dislike_count = article.num_vote_down
-        return dislike_count
+    def get_favorite(self, instance):
+        user, article = self.get_user_article()
+        is_favorited = Favorite().is_favorited(user, article)
+        return is_favorited
 
     like = serializers.SerializerMethodField()
     dislike = serializers.SerializerMethodField()
-    likesCount = serializers.SerializerMethodField()
-    dislikesCount = serializers.SerializerMethodField()
+    favorite = serializers.SerializerMethodField()
+    likesCount = serializers.ReadOnlyField(source='num_vote_up')
+    dislikesCount = serializers.ReadOnlyField(source='num_vote_down')
 
     class Meta:
         model = Article
         fields = (
             'slug', 'title', 'description', 'body', 'created_at',
             'updated_at', 'author', 'tagList', 'like', 'dislike',
-            'likesCount', 'dislikesCount', 'comments'
+            'likesCount', 'dislikesCount', 'comments', 'favorite',
+            'favoritesCount'
         )
 
 
@@ -90,22 +99,6 @@ class ArticlePaginator(PageNumberPagination):
             ('previous', self.get_previous_link()),
             ('results', data)
         ]))
-
-
-class FavoritedArticlesSerializer(serializers.ModelSerializer):
-    """
-    A class to fetch all favorited articles
-    """
-    favorited = serializers.ReadOnlyField(source="get_favorited")
-    author = serializers.ReadOnlyField(source="get_author_details")
-
-    class Meta:
-        model = Article
-        fields = (
-            'slug', 'title', 'description', 'body',
-            'created_at', 'favorited', 'favoritesCount',
-            'updated_at', 'author'
-        )
 
 
 class FavoritesSerializer(serializers.ModelSerializer):
