@@ -57,26 +57,26 @@ class ArticleSerializer(BaseSerializer):
         is_favorited = Favorite().is_favorited(user, article)
         return is_favorited
 
-    def get_my_ratings(self, obj):
+    def get_ratings(self, obj):
         article = self.get_likes_data()
         request = self.context.get('request', None)
-        my_ratings = RatingModel().my_ratings(article.id, request.user.id)
-        return my_ratings
+        ratings = RatingModel().ratings(article.id, request.user.id)
+        return ratings
 
     like = serializers.SerializerMethodField()
     dislike = serializers.SerializerMethodField()
     favorite = serializers.SerializerMethodField()
     likesCount = serializers.ReadOnlyField(source='num_vote_up')
     dislikesCount = serializers.ReadOnlyField(source='num_vote_down')
-    my_ratings = serializers.SerializerMethodField()
+    ratings = serializers.SerializerMethodField()
 
     class Meta:
         model = Article
         fields = (
             'slug', 'title', 'description', 'body', 'created_at',
-            'updated_at', 'author', 'tagList', 'like', 'dislike',
+            'updated_at', 'author', 'ratings', 'tagList', 'like', 'dislike',
             'likesCount', 'dislikesCount', 'comments', 'favorite',
-            'favoritesCount', 'my_ratings', 'average_ratings'
+            'favoritesCount'
         )
 
 

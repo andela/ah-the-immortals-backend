@@ -85,7 +85,7 @@ class ListCreateArticleAPIView(ListCreateAPIView):
             data=article,
             remove_fields=['like', 'created_at', 'updated_at',
                            'favorite', 'dislike', 'likesCount',
-                           'dislikesCount'])
+                           'dislikesCount', 'ratings'])
         serializer.is_valid(raise_exception=True)
         article = serializer.save(author=request.user)
         data = serializer.data
@@ -124,7 +124,7 @@ class ListCreateArticleAPIView(ListCreateAPIView):
                                                       'comments',
                                                       'favorite',
                                                       'dislike',
-                                                      'my_ratings'])
+                                                      'ratings'])
         response = paginator.get_paginated_response({
             "articles": serializer.data
         })
@@ -179,7 +179,8 @@ class RetrieveUpdateArticleAPIView(GenericAPIView):
                 partial=True,
                 remove_fields=['like', 'created_at', 'updated_at',
                                'favorite', 'dislike', 'likesCount',
-                               'dislikesCount']
+                               'dislikesCount',
+                               'ratings']
             )
             serializer.is_valid(raise_exception=True)
             article = serializer.save()
@@ -459,21 +460,14 @@ class RateArticleAPIView(GenericAPIView):
 
         serializer.is_valid(raise_exception=True)
         serializer.save(article=article, rated_by=request.user)
-        articles = {
-            "slug": serializer.data['article']['slug'],
-            "title": serializer.data['article']['title'],
-            "description": serializer.data['article']['description'],
-            "body": serializer.data['article']['body'],
-            "created_at": serializer.data['article']['created_at'],
-            "updated_at": serializer.data['article']['updated_at']
-        }
+        serializer_article = ArticleSerializer(
+            article,
+            context={
+                'article': article.slug, 'request': request}
+        )
+        article_data = serializer_article.data
 
-        articles.update({'ratings': {
-            "my_rating": serializer.data.get('rate'),
-            "average_rating": serializer.data.get('average_rating')
-        }})
-
-        return Response(articles, status=status.HTTP_201_CREATED)
+        return Response(article_data, status=status.HTTP_201_CREATED)
 
 
 class CommentAPIView(GenericAPIView):

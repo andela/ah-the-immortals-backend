@@ -51,4 +51,4 @@ class RatingArticlesTest(BaseTest):
     def test_rate_own_article(self):
         self.is_authenticated("adam@gmail.com", "@Us3r.com")
         rating = self.rate_article()
-        self.assertEqual(rating.data.get("errors").get("error"), "Dang! You can't rate your own article")
+        self.assertEqual(rating.data.get("errors").get("error"), "You can't rate your own article")

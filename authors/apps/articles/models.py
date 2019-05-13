@@ -47,7 +47,8 @@ class Article(VoteModel, models.Model):
     body = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    author = models.ForeignKey(User, on_delete=models.CASCADE)
+    author = models.ForeignKey(
+        User, related_name='rated_article', on_delete=models.CASCADE)
     tags = models.ManyToManyField(Tag)
     favorited = models.BooleanField(default=False)
     favoritesCount = models.PositiveSmallIntegerField(default=0)
@@ -74,21 +75,14 @@ class Article(VoteModel, models.Model):
             "following": self.author.profile.following.reverse
         }
 
-    @property
-    def average_ratings(self):
+    def average_ratings(self, id):
         import math
-        ratings = RatingModel.objects.filter(article__pk=self.pk)
+        user_ratings = RatingModel.objects.filter(article__pk=id)
         average = 0
-        if ratings:
-            total = sum([rating.rate for rating in ratings])
-            average = total/ratings.count()
-        return average
-
-    @property
-    def my_ratings(self):
-        rates = RatingModel.objects.filter(article__pk=self.pk)
-        my_ratings = [rates.rate for rating in rates]
-        return my_ratings
+        if user_ratings:
+            total = sum([rating.rate for rating in user_ratings])
+            average = total/user_ratings.count()
+        return float('%.1f' % (average))
 
     @property
     def tagList(self):
@@ -130,9 +124,6 @@ class Comment(models.Model):
 
     class Meta:
         ordering = ['-created_at']
-
-    # def __str__(self):
-    #     return self.body
 
     def children(self):
         return Comment.objects.filter(parent=self)
@@ -224,7 +215,7 @@ class RatingModel(models.Model):
             "updated_at": self.article.updated_at
         }
 
-    def my_ratings(self, article, user):
+    def ratings(self, article, user):
         """
         Model to display rating for users in an articles
         """
@@ -234,12 +225,13 @@ class RatingModel(models.Model):
             user = self.rated_by
         except Article.DoesNotExist:
             pass
-        
 
-        queryset = RatingModel.objects.filter(article_id=article, rated_by_id=user).first()
-
-  
+        queryset = RatingModel.objects.filter(
+            article_id=article, rated_by_id=user).first()
 
         if queryset:
-            return queryset.rate
-        return False
+            return {
+                "my_ratings": queryset.rate,
+                "average_ratings": Article().average_ratings(article)
+            }
+        return 0
