@@ -82,6 +82,10 @@ class ListCreateArticleAPIView(ListCreateAPIView):
         response = paginator.get_paginated_response({
             "articles": serializer.data
         })
+        if not serializer.data:
+            response = Response(data={
+                "error": "We couldn’t find any articles"
+            }, status=status.HTTP_404_NOT_FOUND)
         return response
 
 
