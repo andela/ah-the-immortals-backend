@@ -10,6 +10,7 @@ from authors.apps.profiles.models import Profile
 import json
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+from .utils import get_comments
 
 User = get_user_model()
 
@@ -95,6 +96,14 @@ class Article(VoteModel, models.Model):
             if not tag.articles:
                 tag.delete()
 
+    @property
+    def comments(self):
+        """
+        Gets all comments on a specific article
+        """
+        comments = Comment.objects.filter(article__slug=self.slug)
+        return get_comments(comments)
+
 
 class Comment(models.Model):
     """
@@ -111,11 +120,38 @@ class Comment(models.Model):
     class Meta:
         ordering = ['-created_at']
 
-    def __str__(self):
-        return self.body
+    # def __str__(self):
+    #     return self.body
 
     def children(self):
         return Comment.objects.filter(parent=self)
+
+    @property
+    def comments(self):
+        """
+        Returns a serializable format of children
+        """
+        comments = Comment.objects.all()
+        return get_comments(comments)
+
+    @property
+    def representation(self):
+        """
+        Representation of a comment in a JSON serializable format
+        """
+
+        response = {
+            "id": self.pk,
+            "article": {
+                "author": self.article.author.username,
+                "body": self.article.body
+            },
+            "createdAt": self.created_at,
+            "updatedAt": self.updated_at,
+            "body": self.body,
+            "author": self.get_profile_details()
+        }
+        return response
 
     @property
     def is_parent(self):
