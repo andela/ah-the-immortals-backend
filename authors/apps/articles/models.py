@@ -3,9 +3,7 @@ from django.contrib.auth import get_user_model
 from autoslug import AutoSlugField
 from cloudinary.models import CloudinaryField
 from cloudinary import CloudinaryImage
-
 from vote.models import VoteModel
-
 from authors.apps.profiles.models import Profile
 import json
 from django.db.models.signals import post_save
@@ -107,13 +105,12 @@ class Article(VoteModel, models.Model):
             if not tag.articles:
                 tag.delete()
 
-    @property
-    def comments(self):
+    def comments(self, request=None):
         """
         Gets all comments on a specific article
         """
         comments = Comment.objects.filter(article__slug=self.slug)
-        return get_comments(comments)
+        return get_comments(comments, request)
 
     @property
     def readtime(self):
@@ -130,6 +127,7 @@ class Comment(models.Model):
     body = models.TextField(null=False, blank=False)
     parent = models.ForeignKey(
         'self', null=True, blank=True, on_delete=models.CASCADE)
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -147,8 +145,7 @@ class Comment(models.Model):
         comments = Comment.objects.all()
         return get_comments(comments)
 
-    @property
-    def representation(self):
+    def representation(self, request=None):
         """
         Representation of a comment in a JSON serializable format
         """
@@ -165,7 +162,13 @@ class Comment(models.Model):
             "updatedAt": self.updated_at,
             "body": self.body,
             "author": self.get_profile_details(),
-            "parent": parent
+            "parent": parent,
+            "likes_info": {
+                "likes_count": self.likes_count(),
+                "dislikes_count": self.dislikes_count(),
+                "like": self.liked(request),
+                "dislike": self.disliked(request),
+            }
         }
         return response
 
@@ -180,6 +183,55 @@ class Comment(models.Model):
         get author's Profile
         """
         return Article.get_author_details(self)
+
+    def check_like(self, request, like_type):
+        """
+        Check like or dislike to a comment
+        """
+        if request.user:
+            if like_type == "like":
+                return LikeDislikeComment.objects.filter(
+                    comment__pk=self.pk,
+                    user__pk=request.user.pk,
+                    like=True
+                ).exists()
+            elif like_type == "dislike":
+                return LikeDislikeComment.objects.filter(
+                    comment__pk=self.pk,
+                    user__pk=request.user.pk,
+                    dislike=True
+                ).exists()
+        return None
+
+    def liked(self, request):
+        """
+        Checks if a user has liked a comment
+        """
+        return self.check_like(request, "like")
+
+    def disliked(self, request):
+        """
+        Checks if a user has disliked a comment
+        """
+        return self.check_like(request, "dislike")
+
+    def likes_count(self):
+        """
+        Checks the number of likes on a comment
+        """
+        return LikeDislikeComment.objects.filter(
+            comment__pk=self.pk,
+            like=True
+        ).count()
+
+    def dislikes_count(self):
+        """
+        Checks the number of dislikes on a comment
+        """
+        return LikeDislikeComment.objects.filter(
+            comment__pk=self.pk,
+            dislike=True
+        ).count()
 
 
 class Favorite(models.Model):
@@ -283,3 +335,21 @@ class Bookmarks(models.Model):
         if qs:
             return True
         return False
+
+
+class LikeDislikeComment(models.Model):
+    """
+    Handles liking and dislike of a comment.
+    """
+    user = models.ForeignKey(
+        User,
+        related_name='like_by',
+        on_delete=models.CASCADE
+    )
+    comment = models.ForeignKey(
+        Comment,
+        related_name='liked_comment',
+        on_delete=models.CASCADE
+    )
+    like = models.BooleanField(default=False)
+    dislike = models.BooleanField(default=False)

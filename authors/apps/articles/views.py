@@ -1,3 +1,5 @@
+import types
+
 from django.core.exceptions import ObjectDoesNotExist
 from django.shortcuts import get_object_or_404, render
 from django_filters import rest_framework as filters
@@ -15,13 +17,15 @@ from .exceptions import (ArticleNotFound, BookmarkDoesNotExist, Forbidden,
                          ItemDoesNotExist)
 from .filters import ArticleFilter
 from .models import (Article, Bookmarks, Comment, CommentHistory, Favorite,
-                     RatingModel, Tag)
-from .serializers import (ArticlePaginator, ArticleSerializer,
-                          BookmarkSerializers, CommentChildSerializer,
-                          CommentDetailSerializer,
-                          CommentEditHistorySerializer, CommentSerializer,
-                          DisplayCommentsSerializer, DisplaySingleComment,
-                          FavoritesSerializer, RatingSerializer, add_tag_list)
+                     LikeDislikeComment, RatingModel, Tag)
+from .serializers import (
+    ArticlePaginator, ArticleSerializer,
+    BookmarkSerializers, CommentChildSerializer,
+    CommentDetailSerializer,
+    CommentEditHistorySerializer, CommentSerializer,
+    DisplayCommentsSerializer, DisplaySingleComment,
+    FavoritesSerializer, RatingSerializer, add_tag_list
+)
 
 
 def get_serialiser_data(serializer_data, content):
@@ -85,7 +89,9 @@ class ListCreateArticleAPIView(ListCreateAPIView):
         serializer = self.serializer_class(
             data=article,
             remove_fields=['like_info', 'created_at', 'updated_at',
-                           'favorites', 'ratings'])
+                           'favorites', 'ratings'],
+            context={"request": request}
+        )
         serializer.is_valid(raise_exception=True)
         article = serializer.save(author=request.user)
         data = serializer.data
@@ -119,14 +125,16 @@ class ListCreateArticleAPIView(ListCreateAPIView):
         paginator = ArticlePaginator()
         paginator.page_size = page_limit
         result = paginator.paginate_queryset(articles, request)
-        serializer = ArticleSerializer(result, many=True,
-                                       context={'request': request},
-                                       remove_fields=['like_info',
-                                                      'comments',
-                                                      'favorites',
-                                                      'ratings'
-                                                      ])
-
+        serializer = ArticleSerializer(
+            result, many=True,
+            context={'request': request},
+            remove_fields=[
+                'like_info',
+                'comments',
+                'favorites',
+                'ratings'
+            ]
+        )
         response = paginator.get_paginated_response({
             "articles": serializer.data
         })
@@ -180,7 +188,8 @@ class RetrieveUpdateArticleAPIView(GenericAPIView):
                 data=request.data,
                 partial=True,
                 remove_fields=['like_info', 'created_at', 'updated_at',
-                               'favorites', 'ratings']
+                               'favorites', 'ratings'],
+                context={"request": request}
             )
             serializer.is_valid(raise_exception=True)
             article = serializer.save()
@@ -504,10 +513,14 @@ class CommentAPIView(GenericAPIView):
         self.serializer_class = DisplayCommentsSerializer
 
         article = Article.objects.filter(slug=slug)
-        serializer = self.serializer_class(article, many=True)
+        serializer = self.serializer_class(
+            article,
+            many=True,
+            context={"request": request}
+        )
         data = {}
         response = None
-        response = get_serialiser_data(serializer, "comments")
+        response = get_serialiser_data(serializer, "comments",)
         return response
 
 
@@ -521,11 +534,16 @@ class CommentDetailAPIView(GenericAPIView):
         """
         self.serializer_class = DisplaySingleComment
         comment = Comment.objects.all().filter(id=id, article__slug=slug)
-        serializer = self.serializer_class(comment, many=True)
+        serializer = self.get_serializer(
+            comment,
+            many=True,
+            context={"request": request}
+        )
         data = None
         response = None
         response = get_serialiser_data(serializer, "representation")
         return response
+        # return Response({"comment": serializer.data})
 
     def post(self, request, slug, id):
         """
@@ -813,3 +831,108 @@ class DeleteBookMakeAPIView(GenericAPIView):
                             status.HTTP_403_FORBIDDEN)
         except Bookmarks.DoesNotExist:
             raise BookmarkDoesNotExist
+
+
+class LikeCommentsView(GenericAPIView):
+    """ View class to handle liking of comments """
+    permission_classes = (IsAuthenticated, )
+    serializer_class = DisplaySingleComment
+
+    def like_comment(self, comment, user):
+        """
+        Likes a comment
+        """
+        LikeDislikeComment.objects.create(
+            user=user,
+            comment=comment,
+            like=True
+        )
+
+    def dislike_comment(self, comment, user):
+        """
+        Dislikes a comment
+        """
+        LikeDislikeComment.objects.create(
+            user=user,
+            comment=comment,
+            dislike=True
+        )
+
+    def remove_like(self, comment, user):
+        """
+        Removes a like
+        """
+        LikeDislikeComment.objects.get(
+            comment=comment,
+            user=user,
+            like=True
+        ).delete()
+
+    def remove_dislike(self, comment, user):
+        """
+        Removes a dislike
+        """
+        LikeDislikeComment.objects.get(
+            comment=comment,
+            user=user,
+            dislike=True
+        ).delete()
+
+    def like(self, user, comment, message, request):
+        """
+        Handles comment like
+        """
+        if comment.liked(request):
+            self.remove_like(comment, user)
+            message = "Comment unliked"
+        elif comment.disliked(request):
+            self.remove_dislike(comment, user)
+            self.like_comment(comment, user)
+        else:
+            self.like_comment(comment, user)
+        return message
+
+    def dislike(self, user, comment, message, request):
+        """
+        Handles comment dislike
+        """
+        if comment.disliked(request):
+            self.remove_dislike(comment, user)
+            message = "Dislike removed"
+        elif comment.liked(request):
+            self.remove_like(comment, user)
+            self.dislike_comment(comment, user)
+        else:
+            self.dislike_comment(comment, user)
+        return message
+
+    def give_like(self, request, comment, vote_type):
+        """
+        Gives a like or dislike depending on like type
+        """
+        message = None
+        user = request.user
+        if vote_type == "like":
+            message = "Comment liked"
+            message = self.like(user, comment, message, request)
+        elif vote_type == "dislike":
+            message = "Comment disliked"
+            message = self.dislike(user, comment, message, request)
+        serializer = self.get_serializer(
+            comment,
+            many=False
+        )
+        data = serializer.data.get("representation")
+        return data, message
+
+    def post(self, request, id, vote_type):
+        try:
+            comment = Comment.objects.get(id=id)
+        except Comment.DoesNotExist:
+            APIException.status_code = status.HTTP_404_NOT_FOUND
+            raise APIException({"message": "comment does not exist"})
+        data, message = self.give_like(request, comment, vote_type)
+        return Response({
+            "comment": data,
+            "message": message
+        })

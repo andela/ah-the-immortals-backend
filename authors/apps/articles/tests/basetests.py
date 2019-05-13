@@ -78,6 +78,7 @@ class BaseTest(APITestCase):
             body='This is a test history comment'
         )
         self.comment_hist.save()
+        self.comment_object = self.comment
         self.update = {
             "description": "Brian Koin is making noise"
         }
@@ -618,7 +619,7 @@ class BaseTest(APITestCase):
         return self.client.put(commentsdetail_url_delete,
                                data=json.dumps(self.update_comment),
                                content_type="application/json")
-    
+
     def update_comment_succefully(self):
         """if
         update a comment
@@ -629,7 +630,7 @@ class BaseTest(APITestCase):
             "articles:commentdetail", args=["this-is-mine", id]),
             data=json.dumps(self.update_comment),
             content_type="application/json")
-    
+
     def create_comment_history(self):
         """
         Create a new comment
@@ -672,7 +673,7 @@ class BaseTest(APITestCase):
             url,
             content_type="application/json"
         )
-    
+
     def get_one_comment_history(self):
         comment_id = str(self.comment_hist.id)
         slug = str(self.article.slug)
@@ -1117,4 +1118,109 @@ class FilterBaseTest(TagsBaseTest):
                                    + '?author=' + 'philip' + '?title=' + 'ted',
                                    format='json'
                                    )
+        return response
+
+
+class LikeCommentsBaseTests(BaseTest):
+
+    def setUp(self):
+        super().setUp()
+        self.comment_id = self.comment_object.pk
+        self.like_type = "like"
+        self.dislike_type = "dislike"
+
+    def get_like_url(self):
+        """
+        Gets the like url
+        """
+        return "/api/articles/comments/{}/like/".format(self.comment_id)
+
+    def get_dislike_url(self):
+        """
+        Gets dislike url
+        """
+        return "/api/articles/comments/{}/dislike/".format(self.comment_id)
+
+    def like(self):
+        """
+        Likes a comment
+        """
+        url = self.get_like_url()
+        response = self.client.post(
+            path=url,
+            format='json'
+        )
+        return response
+
+    def dislike(self):
+        """
+        Dislikes a comment
+        """
+        url = self.get_dislike_url()
+        response = self.client.post(
+            path=url,
+            format='json'
+        )
+        return response
+
+    def like_comment(self):
+        """
+        likes a comment when authenticated
+        """
+        self.is_authenticated("adam@gmail.com", "@Us3r.com")
+        return self.like()
+
+    def dislike_comment(self):
+        """
+        Dislikes a comment when authenticated
+        """
+        self.is_authenticated("adam@gmail.com", "@Us3r.com")
+        return self.dislike()
+
+    def like_unexisting_comment(self):
+        """
+        likes unexisting comment
+        """
+        self.comment_id = 58375837583758
+        response = self.like_comment()
+        return response
+
+    def dislike_unexisting_comment(self):
+        """
+        dislikes unexisting comment
+        """
+        self.comment_id = 58375837583758
+        response = self.dislike_comment()
+        return response
+
+    def dislike_a_comment_more_than_once(self):
+        """
+        dislike a comment for the second time
+        """
+        self.dislike_comment()
+        response = self.dislike_comment()
+        return response
+
+    def like_a_comment_more_than_once(self):
+        """
+        like a comment for the second time
+        """
+        self.like_comment()
+        response = self.like_comment()
+        return response
+
+    def like_disliked_comment(self):
+        """
+        Likes an already disliked comment
+        """
+        self.dislike_comment()
+        response = self.like_comment()
+        return response
+
+    def dislike_liked_comment(self):
+        """
+        Dislikes a liked comment
+        """
+        self.like_comment()
+        response = self.dislike_comment()
         return response

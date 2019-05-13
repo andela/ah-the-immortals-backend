@@ -98,8 +98,9 @@ class TestComments(BaseTest):
         self.update_comment_exist_in_history("I love myself")
         response = self.update_comment_exist_in_history("I love myself")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data.get("message"), "No changes detected on the comment")
-    
+        self.assertEqual(response.data.get("message"),
+                         "No changes detected on the comment")
+
     def test_update_comment_not_own_history(self):
         """
         Test update comment successful
@@ -107,7 +108,8 @@ class TestComments(BaseTest):
         self.is_authenticated("jim@gmail.com", "@Us3r.com")
         response = self.update_comment_exist_in_history("I love myself")
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
-        self.assertEqual(response.data.get("detail"), "You cannot edit or delete a comment you dont own")
+        self.assertEqual(response.data.get("detail"),
+                         "You cannot edit or delete a comment you dont own")
 
     def test_delete_comment_not_own_history(self):
         """
@@ -116,7 +118,8 @@ class TestComments(BaseTest):
         self.is_authenticated("jim@gmail.com", "@Us3r.com")
         response = self.delete_comment_for_history()
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
-        self.assertEqual(response.data.get("detail"), "You cannot edit or delete a comment you dont own")
+        self.assertEqual(response.data.get("detail"),
+                         "You cannot edit or delete a comment you dont own")
 
     def test_successful_get_one_comment(self):
         """

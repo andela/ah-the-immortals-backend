@@ -2,6 +2,7 @@ import json
 from collections import OrderedDict
 
 from django.db.models import Avg
+from django.http import JsonResponse
 from rest_framework import serializers
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
@@ -10,8 +11,10 @@ from authors.apps.articles.models import Tag
 from authors.utils.baseserializer import BaseSerializer
 
 from .exceptions import ArticleNotFound
-from .models import (Article, Bookmarks, Comment, CommentHistory, Favorite,
-                     RatingModel)
+from .models import (
+    Article, Bookmarks, Comment, CommentHistory, Favorite,
+    RatingModel, LikeDislikeComment
+)
 
 
 class ArticleSerializer(BaseSerializer):
@@ -115,6 +118,11 @@ class ArticleSerializer(BaseSerializer):
     image_url = serializers.ReadOnlyField(source='get_image')
     bookmarked = serializers.SerializerMethodField()
 
+    def get_comments(self, article):
+        request = self.context.get("request")
+        return article.comments(request)
+    comments = serializers.SerializerMethodField()
+
     class Meta:
         model = Article
         fields = (
@@ -215,6 +223,12 @@ class DisplayCommentsSerializer(serializers.ModelSerializer):
     """
     Serializer for rendering comments
     """
+
+    def get_comments(self, article):
+        request = self.context.get("request")
+        return article.comments(request)
+    comments = serializers.SerializerMethodField()
+
     class Meta:
         model = Article
         fields = ("comments",)
@@ -224,6 +238,12 @@ class DisplaySingleComment(serializers.ModelSerializer):
     """
     Serializes single representation of any comment
     """
+
+    def get_representation(self, comment):
+        request = self.context.get("request")
+        return comment.representation(request=request)
+    representation = serializers.SerializerMethodField()
+
     class Meta:
         model = Comment
         fields = ("representation",)

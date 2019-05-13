@@ -2,17 +2,14 @@ from django.conf.urls import url
 from django.urls import path, re_path
 
 from .views import (
-    CommentAPIView, CommentDetailAPIView, FavoritesView,
-    FetchTags, LikeDislikeView, ListCreateArticleAPIView,
-    ListUserFavoriteArticlesView, RateArticleAPIView,
-    RetrieveUpdateArticleAPIView, SocialShareArticleView,
-    CommentOneHistoryView,
-    CommentAllHistoryView,
-    GetBookMarksAPIVIew,
-    DeleteBookMakeAPIView,
-    BookmarkAPIView, SocialShareArticleView
+    BookmarkAPIView, CommentAllHistoryView, CommentAPIView,
+    CommentDetailAPIView, CommentOneHistoryView,
+    DeleteBookMakeAPIView, FavoritesView, FetchTags,
+    GetBookMarksAPIVIew, LikeCommentsView, LikeDislikeView,
+    ListCreateArticleAPIView, ListUserFavoriteArticlesView,
+    RateArticleAPIView, RetrieveUpdateArticleAPIView,
+    SocialShareArticleView
 )
-
 
 app_name = 'articles'
 
@@ -45,4 +42,7 @@ urlpatterns = [
          name='book_mark'),
     path('article/bookmarks/', GetBookMarksAPIVIew.as_view(),
          name='bookmarks'),
+    url(r'^articles/comments/(?P<id>[\d+]+)/(?P<vote_type>like|dislike)/$',
+        LikeCommentsView.as_view(),
+        name="like-comment"),
 ]
