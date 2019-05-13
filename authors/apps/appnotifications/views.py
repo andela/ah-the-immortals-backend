@@ -23,6 +23,7 @@ class SubscribeUnsubscribeAPIView(RetrieveUpdateAPIView):
 
     def update(self, request, *args, **kwargs):
         user = UserNotification.objects.get(user=request.user)
+        request.user.notifications.mark_all_as_deleted()
         serializer_data = request.data
         serializer = self.serializer_class(
             instance=user, data=serializer_data, partial=True)
@@ -46,7 +47,7 @@ class UnsubscribeEmailAPIView(GenericAPIView):
         user.save()
         resp = {
             "message": "You have unsubscribed from email notifications"
-            }
+        }
         return Response(data=resp, status=status.HTTP_200_OK)
 
 
@@ -59,10 +60,15 @@ class NotificationApiView(ListAPIView):
         serializer = self.serializer_class(
             notifications, many=True
         )
-        if notifications.count() == 0:
+        user = request.user.notification_preferences
+        if user.in_app_notifications_subscription is False:
             resp = {
-                "message": "You have no notifications"
-                }
+                "message": "You are not subscribed to in app notifications"
+            }
+        elif notifications.count() == 0:
+            resp = {
+                "message": "You have no new notifications"
+            }
         else:
             resp = {
                 "message": f"You have {notifications.count()} notification(s)",
@@ -75,16 +81,29 @@ class AllNotificationsAPIview(NotificationApiView):
     """
     list all user's notifications
     """
+
     def notifications(self, request):
         request.user.notifications.mark_all_as_read()
-        request.user.notifications.mark_as_sent()
-        return request.user.notifications
+        return request.user.notifications.active()
+
+    def delete(self, request, *args, **kwargs):
+        if request.user.notifications.active():
+            request.user.notifications.mark_all_as_deleted()
+            resp = {
+                'message': 'Notifications deleted successfully'
+            }
+        else:
+            resp = {
+                'message': 'No notifications found'
+            }
+        return Response(resp)
 
 
 class UnreadNotificationsAPIview(NotificationApiView):
     """
     list all user's unread notifications
     """
+
     def notifications(self, request):
-        request.user.notifications.mark_as_sent()
-        return request.user.notifications.unread()
+        request.user.notifications.unread()
+        return request.user.notifications.active()
