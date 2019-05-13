@@ -1,5 +1,6 @@
 from authors.apps.articles.tests.basetests import PagniationBaseTest
 from rest_framework import status
+from authors.apps.articles.models import Article
 
 
 class TestPagination(PagniationBaseTest):
@@ -122,4 +123,22 @@ class TestPagination(PagniationBaseTest):
         self.assertEqual(
             response.data.get("detail"),
             self.error_msg
+        )
+
+    def test_articles_per_page_count(self):
+        """
+        Tests return of the number of articles per page
+        """
+        response = self.get_articles_per_page(page_limit=4)
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK
+        )
+        self.assertEqual(
+            response.data.get("pageCount"),
+            4
+        )
+        self.assertEqual(
+            response.data.get("articlesCount"),
+            Article.objects.all().count()
         )
