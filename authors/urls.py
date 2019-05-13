@@ -30,6 +30,8 @@ articleurls = include(('authors.apps.articles.urls', 'articles'),
                       namespace='article')
 escalationurls = include(('authors.apps.escalation.urls', 'escalation'),
                          namespace='escalation')
+highlighturls = include(('authors.apps.highlights.urls', 'highlights'),
+                        namespace='highlights')
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', authurls),
@@ -40,4 +42,5 @@ urlpatterns = [
     path('', RedirectView.as_view(url='/api/swagger/')),
     path('api/', articleurls),
     path('api/', escalationurls),
+    path('api/', highlighturls),
 ]

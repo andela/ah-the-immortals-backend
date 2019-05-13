@@ -401,7 +401,7 @@ Optional fields: `tagList` as an array of Strings
 
 ### Update Article
 
-`PUT /api/articles/:slug`
+`PATCH /api/articles/:slug`
 
 Example request body:
 
@@ -470,6 +470,54 @@ No additional parameters required
 ### Get Tags
 
 `GET /api/tags`
+
+### Create Highlight
+
+`POST /api/articles/:slug/highlight/`
+
+Example request body:
+
+```source-json
+{
+    "field": "body",
+    "comment": "Review these words",
+    "start_index": 37,
+    "end_index": 42
+
+}
+```
+
+Authentication required, will return a Highlight
+
+Required fields: `field`, `start_index`, `end_index`
+Optional fields: `comment`
+
+### Update Highlight
+
+`PATCH /api/articles/:slug/highlight/:id/`
+
+Example request body:
+
+```source-json
+{
+    "comment": "Rewrite this section"
+}
+```
+
+Authentication required, returns the updated Highlight
+
+Optional fields: `start_index`, `end_index`, `comment`
+
+### Delete Highlight
+
+`DELETE /api/articles/:slug/highlight/:id/`
+
+Authentication required
+
+### Get Highlights
+`GET /api/articles/:slug/highlight/`
+
+Authentication required, returns all highlights by the user on an article
 
 ## Local Setup
 
