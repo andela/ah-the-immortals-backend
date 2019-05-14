@@ -4,7 +4,7 @@ from django.urls import path, re_path
 from .views import (CommentAPIView, CommentDetailAPIView, FavoritesView,
                     FetchTags, LikeDislikeView, ListCreateArticleAPIView,
                     ListUserFavoriteArticlesView, RateArticleAPIView,
-                    RetrieveUpdateArticleAPIView)
+                    RetrieveUpdateArticleAPIView, SocialShareArticleView)
 
 # from .filters import FilterArticlesView
 
@@ -27,4 +27,6 @@ urlpatterns = [
          ListUserFavoriteArticlesView.as_view(), name='get_favorite'),
     path('articles/<slug>/rate/',
          RateArticleAPIView.as_view(), name='rating_articles'),
+    path("articles/<slug>/share/<provider>/",
+         SocialShareArticleView.as_view(), name="share"),
 ]

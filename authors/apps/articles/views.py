@@ -1,18 +1,19 @@
 from django.core.exceptions import ObjectDoesNotExist
 from django.shortcuts import get_object_or_404, render
+from django_filters import rest_framework as filters
 from rest_framework import permissions, status
 from rest_framework.exceptions import APIException, ValidationError
+from rest_framework.filters import SearchFilter
 from rest_framework.generics import GenericAPIView, ListCreateAPIView
 from rest_framework.permissions import (AllowAny, IsAuthenticated,
                                         IsAuthenticatedOrReadOnly)
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from django_filters import rest_framework as filters
-from rest_framework.filters import SearchFilter
 
+from ...utils.social_share_utils import generate_share_url
 from .exceptions import ArticleNotFound, Forbidden, ItemDoesNotExist
-from .models import Article, Comment, Favorite, RatingModel, Tag
 from .filters import ArticleFilter
+from .models import Article, Comment, Favorite, RatingModel, Tag
 from .serializers import (ArticlePaginator, ArticleSerializer,
                           CommentChildSerializer, CommentDetailSerializer,
                           CommentSerializer,
@@ -591,3 +592,34 @@ class CommentDetailAPIView(GenericAPIView):
                 raise Forbidden
         except Comment.DoesNotExist:
             raise ItemDoesNotExist
+
+
+class SocialShareArticleView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, slug, provider):
+        """
+        Generate sharing links for various social platforms
+        """
+        shared_article = RetrieveUpdateArticleAPIView().retrieve_article(slug)
+        context = {'request': request}
+
+        uri = request.build_absolute_uri()
+
+        article_uri = uri.rsplit('share/', 1)[0]
+        try:
+            share_link = generate_share_url(
+                context, provider, shared_article, article_uri)
+
+            if share_link:
+                return Response({
+                    "share": {
+                        "provider": provider,
+                        "link": share_link
+                    }
+                })
+        except KeyError:
+            return Response({
+                "message": "Please select a valid provider - twitter, "
+                           "facebook, email, telegram, linkedin, reddit"
+            }, status=200)
