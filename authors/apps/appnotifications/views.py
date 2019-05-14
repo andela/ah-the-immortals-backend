@@ -23,7 +23,6 @@ class SubscribeUnsubscribeAPIView(RetrieveUpdateAPIView):
 
     def update(self, request, *args, **kwargs):
         user = UserNotification.objects.get(user=request.user)
-        request.user.notifications.mark_all_as_deleted()
         serializer_data = request.data
         serializer = self.serializer_class(
             instance=user, data=serializer_data, partial=True)
@@ -43,7 +42,7 @@ class UnsubscribeEmailAPIView(GenericAPIView):
         token_object = Token.objects.get(key=token)
         user = token_object.user
         user = UserNotification.objects.get(user=user)
-        user.email_notifications_subscription = False
+        user.email_notifications = False
         user.save()
         resp = {
             "message": "You have unsubscribed from email notifications"
@@ -60,14 +59,10 @@ class NotificationApiView(ListAPIView):
         serializer = self.serializer_class(
             notifications, many=True
         )
-        user = request.user.notification_preferences
-        if user.in_app_notifications_subscription is False:
+        if notifications.count() == 0:
             resp = {
-                "message": "You are not subscribed to in app notifications"
-            }
-        elif notifications.count() == 0:
-            resp = {
-                "message": "You have no new notifications"
+                "message": "You have no new notifications",
+                "notifications": serializer.data
             }
         else:
             resp = {

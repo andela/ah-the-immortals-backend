@@ -72,18 +72,6 @@ class TestNotifications(NotificationBaseTest):
         response = self.client.get(self.notification_url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-    def test_get_notifications_while_unsubscribed(self):
-        """
-        Test getting notifications while user has unsubscribed
-        """
-        self.is_authenticated("jim@gmail.com", "@Us3r.com")
-        self.client.patch(self.subscribe_unsubscribe_url, {
-            'email_notifications_subscription': 'false',
-            'in_app_notifications_subscription': 'false'})
-        response = self.client.get(self.notification_url)
-        self.assertEqual(response.data['message'],
-                         'You are not subscribed to in app notifications')
-
     def test_delete_notifications(self):
         """
         Tests successful deletion of notifications
