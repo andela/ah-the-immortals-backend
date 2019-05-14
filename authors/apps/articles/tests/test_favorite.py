@@ -1,12 +1,20 @@
 from rest_framework import status
-
+from django.contrib.auth import get_user_model
 from authors.apps.articles.tests.basetests import BaseTest
+from authors.apps.articles.models import Favorite
 
+User = get_user_model()
 
 class TestFavoriteArticle(BaseTest):
     """
     Tests for favoriting articles
     """
+    def test_get_favorite_article(self):
+        self.is_authenticated("adam@gmail.com", "@Us3r.com")
+        self.post_favorite()
+        favorite = Favorite.objects.get(article_id=self.article.id).user_id
+        user = User.objects.get(id=self.user1.id).id
+        self.assertEqual(user, favorite)
 
     def test_favorite_successfuly(self):
         """

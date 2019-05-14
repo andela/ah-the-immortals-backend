@@ -201,7 +201,18 @@ class BaseTest(APITestCase):
             content_type="application/json"
         )
 
-    def delete_like_dislike(self, vote_type):
+    def delete_like(self, vote_type):
+        """
+        Like and Unlike
+        """
+        slug = str(self.article.slug)
+        url = reverse("articles:likes", args=[slug, vote_type])
+        return self.client.delete(
+            url,
+            content_type="application/json"
+        )
+        
+    def delete_dislike(self, vote_type):
         """
         Like and Unlike
         """

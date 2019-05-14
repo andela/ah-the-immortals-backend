@@ -74,11 +74,6 @@ class Article(VoteModel, models.Model):
             "following": self.author.profile.following.reverse
         }
 
-    def get_favorited(self):
-        favorite = self.favorited
-        favorite = True
-        return favorite
-
     @property
     def tagList(self):
         """
@@ -172,6 +167,22 @@ class Favorite(models.Model):
     """
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     article = models.ForeignKey(Article, on_delete=models.CASCADE)
+
+    def is_favorited(self, user, article):
+        """
+        Get all articles that are favorited by user
+        """
+        try:
+            article = self.article
+            user = self.user
+        except Article.DoesNotExist:
+            pass
+
+        queryset = Favorite.objects.filter(article_id=article, user_id=user)
+
+        if queryset:
+            return True
+        return False
 
 
 class RatingModel(models.Model):

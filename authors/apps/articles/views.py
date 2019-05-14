@@ -16,10 +16,11 @@ from .filters import ArticleFilter
 from .serializers import (ArticlePaginator, ArticleSerializer,
                           CommentChildSerializer, CommentDetailSerializer,
                           CommentSerializer,
-                          FavoritedArticlesSerializer,
                           DisplayCommentsSerializer,
                           DisplaySingleComment,
-                          FavoritesSerializer, RatingSerializer, add_tag_list)
+                          FavoritesSerializer,
+                          RatingSerializer,
+                          add_tag_list)
 
 
 def get_serialiser_data(serializer_data, content):
@@ -83,7 +84,8 @@ class ListCreateArticleAPIView(ListCreateAPIView):
         serializer = self.serializer_class(
             data=article,
             remove_fields=['like', 'created_at', 'updated_at',
-                           'dislike', 'likesCount', 'dislikesCount'])
+                           'favorite', 'dislike', 'likesCount',
+                           'dislikesCount'])
         serializer.is_valid(raise_exception=True)
         article = serializer.save(author=request.user)
         data = serializer.data
@@ -119,10 +121,9 @@ class ListCreateArticleAPIView(ListCreateAPIView):
         result = paginator.paginate_queryset(articles, request)
         serializer = ArticleSerializer(result, many=True,
                                        remove_fields=['like',
-                                                      'dislike',
-                                                      'likesCount',
-                                                      'dislikesCount',
-                                                      'comments'])
+                                                      'comments',
+                                                      'favorite',
+                                                      'dislike'])
         response = paginator.get_paginated_response({
             "articles": serializer.data
         })
@@ -178,7 +179,8 @@ class RetrieveUpdateArticleAPIView(GenericAPIView):
                 data=request.data,
                 partial=True,
                 remove_fields=['like', 'created_at', 'updated_at',
-                               'dislike', 'likesCount', 'dislikesCount']
+                               'favorite', 'dislike', 'likesCount',
+                               'dislikesCount']
             )
             serializer.is_valid(raise_exception=True)
             article = serializer.save()
@@ -269,14 +271,6 @@ class LikeDislikeView(GenericAPIView):
         article_inst = RetrieveUpdateArticleAPIView()
         article = article_inst.retrieve_article(slug)
 
-        vote_type_list = ["like", "dislike"]
-        if vote_type not in vote_type_list:
-            return Response({
-                'errors': {
-                    'vote_verb': ['Vote verb specified does not exist']
-                }
-            }, status=status.HTTP_404_NOT_FOUND)
-
         def get_vot_response(votetype):
             if vote_type == "dislike":
                 article.votes.down(request.user.id)
@@ -297,18 +291,44 @@ class LikeDislikeView(GenericAPIView):
 
         return response
 
+    def if_vote_exist(self, request, slug, vote):
+        article = RetrieveUpdateArticleAPIView().retrieve_article(slug)
+        if article.votes.exists(request.user.id, vote):
+            return True
+        return False
+
+    def process_vote_type(self, request, slug, vote_type):
+        vote_message = None
+        voted = False
+        if vote_type == "like" and self.if_vote_exist(request, slug, 0):
+            vote_message = ["Like delete successfully"]
+            voted = True
+        elif vote_type == "dislike" and self.if_vote_exist(request, slug, 1):
+            vote_message = ["Dislike delete successfully"]
+            voted = True
+        return vote_message, voted
+
     def delete(self, request, slug, vote_type):
         """
         A method to delete a vote for a certain article
         """
-        article = RetrieveUpdateArticleAPIView().retrieve_article(slug)
-        if article.votes.delete(request.user.id):
+
+        # def get_vot_response(votetype):
+
+        response, voted = self.process_vote_type(request, slug, vote_type)
+        if voted:
+            article = RetrieveUpdateArticleAPIView().retrieve_article(slug)
+            serializer = ArticleSerializer(
+                article,
+                context={'article': slug, 'request': request, },
+                many=False)
             return Response({
-                "message": ["Vote delete successfully"]
+                "article": serializer.data,
+                "message": response
             }, status=status.HTTP_200_OK)
         return Response({
             'errors': {
-                'error': 'You have not liked/disliked this article'
+                'error': 'You have not {}d this article'.format(vote_type)
             }
         }, status=status.HTTP_404_NOT_FOUND)
 
@@ -346,9 +366,13 @@ class FavoritesView(GenericAPIView):
             serializer.save()
             article_id = serializer.data.get("article")
             article = Article.objects.get(id=article_id)
-            article_serializer = FavoritedArticlesSerializer(article).data
+            article_serializer = ArticleSerializer(
+                article,
+                context={'article': slug, 'request': request},
+                many=False
+            )
             response = Response({
-                "article": article_serializer,
+                "article": article_serializer.data,
                 "message": "Article added to favorites"
             }, status=status.HTTP_201_CREATED)
 
@@ -380,18 +404,20 @@ class FavoritesView(GenericAPIView):
 
 class ListUserFavoriteArticlesView(GenericAPIView):
     """
-    Create Articles CRUD
+    List all favorite articles by the user
     """
     permission_classes = [permissions.IsAuthenticated]
-    serializer_class = FavoritedArticlesSerializer
+    serializer_class = ArticleSerializer
 
     def get(self, request):
         favorites = Favorite.objects.filter(
             user_id=request.user.id)
-
         user_favorites = []
         for favorite in favorites:
-            article = FavoritedArticlesSerializer(favorite.article).data
+            article = Article.objects.get(id=favorite.article_id)
+            article = ArticleSerializer(
+                article,
+                context={'article': article.slug, 'request': request},).data
             user_favorites.append(article)
 
         return Response(

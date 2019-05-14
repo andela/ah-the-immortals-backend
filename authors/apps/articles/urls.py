@@ -1,5 +1,5 @@
 from django.conf.urls import url
-from django.urls import path
+from django.urls import path, re_path
 
 from .views import (CommentAPIView, CommentDetailAPIView, FavoritesView,
                     FetchTags, LikeDislikeView, ListCreateArticleAPIView,
@@ -19,8 +19,8 @@ urlpatterns = [
          CommentDetailAPIView.as_view(), name='commentdetail'),
     path('articles/<slug>/', RetrieveUpdateArticleAPIView.as_view(),
          name='articles'),
-    path('articles/<str:slug>/<str:vote_type>/vote/',
-         LikeDislikeView.as_view(), name='likes'),
+    url(r'^articles/(?P<slug>[\w-]+)/(?P<vote_type>like|dislike)/$',
+        LikeDislikeView.as_view(), name='likes'),
     path('articles/<str:slug>/favorite/',
          FavoritesView.as_view(), name='favorite'),
     path('articles/favorites/me/',
