@@ -17,7 +17,7 @@ class TestComments(BaseTest):
     message = 'Comment deleted successfully'
     no_update = 'unsuccesful update either the comment orslug not found'
     no_comment = 'no comments on this article'
-    no_comment_with_id = 'This article does not have a comment withthat id'
+    no_comment_with_id = 'This article does not have a comment with that id'
 
     def test_successful_comment_creation(self):
         """
@@ -124,7 +124,7 @@ class TestComments(BaseTest):
         """
         response = self.get_comment_by_id()
         comment = Comment.objects.all()[0]
-        # comment_id = comment.id
+        comment_id = comment.id
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data.get(
-            'comment').get('body'), comment.body)
+        self.assertEqual(response.data['comment']['body'], comment.body)
+        self.assertEqual(response.data['comment']['parent'], None)

@@ -55,7 +55,7 @@ def get_serialiser_data(serializer_data, content):
             response = Response(
                 data={
                     "comments": "This article does not have a comment with"
-                    "that id"
+                    " that id"
                 },
                 status=status.HTTP_404_NOT_FOUND
             )
