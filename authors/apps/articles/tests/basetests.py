@@ -869,3 +869,13 @@ class FilterBaseTest(TagsBaseTest):
                                    format='json'
                                    )
         return response
+
+    def filter_by_author_and_title(self):
+        """
+        Filter by tag
+        """
+        response = self.client.get((self.articles_url)
+                                   + '?author=' + 'philip' + '?title=' + 'ted',
+                                   format='json'
+                                   )
+        return response

@@ -25,9 +25,9 @@ class TestFilters(FilterBaseTest):
         self.create_an_article()
         response = self.filter_by_non_author()
         self.assertEqual(response.status_code,
-                         status.HTTP_404_NOT_FOUND
+                         status.HTTP_200_OK
                          )
-        message = response.data.get("error")
+        message = response.data.get("message")
         self.assertEqual(message, 'We couldn’t find any articles')
 
     def test_filter_by_one_tag(self):
@@ -66,6 +66,16 @@ class TestFilters(FilterBaseTest):
         """
         self.create_an_article()
         response = self.filter_by_tag_and_title()
+        self.assertEqual(response.status_code,
+                         status.HTTP_200_OK
+                         )
+
+    def test_filter_by_author_and_title(self):
+        """
+        tests filter for articles by author and title
+        """
+        self.create_an_article()
+        response = self.filter_by_author_and_title()
         self.assertEqual(response.status_code,
                          status.HTTP_200_OK
                          )
