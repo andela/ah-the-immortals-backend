@@ -5,7 +5,7 @@ from rest_framework.test import APITestCase, APIClient
 from rest_framework.reverse import reverse
 from rest_framework.authtoken.models import Token
 import json
-from authors.apps.articles.models import Article, Tag, Comment
+from authors.apps.articles.models import Article, Tag, Comment, CommentHistory
 from django.conf import settings
 from authors.apps.articles.filters import ArticleFilter
 
@@ -69,6 +69,12 @@ class BaseTest(APITestCase):
             body='this is a test body'
         )
         self.comment.save()
+        self.comment_hist = Comment.objects.create(
+            article=self.article,
+            author=self.user1,
+            body='This is a test history comment'
+        )
+        self.comment_hist.save()
         self.update = {
             "description": "Brian Koin is making noise"
         }
@@ -527,7 +533,7 @@ class BaseTest(APITestCase):
         return self.client.put(commentsdetail_url_delete,
                                data=json.dumps(self.update_comment),
                                content_type="application/json")
-
+    
     def update_comment_succefully(self):
         """if
         update a comment
@@ -538,6 +544,84 @@ class BaseTest(APITestCase):
             "articles:commentdetail", args=["this-is-mine", id]),
             data=json.dumps(self.update_comment),
             content_type="application/json")
+    
+    def create_comment_history(self):
+        """
+        Create a new comment
+        """
+        return self.client.post(self.comments_url,
+                                data=json.dumps(self.new_comment),
+                                content_type="application/json")
+
+    def get_comment_for_history(self):
+        """
+        A method to get all user favorite articles
+        """
+        comment_id = str(self.comment_hist.id)
+        slug = str(self.article.slug)
+        url = reverse("articles:commentdetail", args=[slug, comment_id])
+        return self.client.get(
+            url,
+            content_type="application/json"
+        )
+
+    def update_comment_exist_in_history(self, body):
+        comment_id = str(self.comment_hist.id)
+        slug = str(self.article.slug)
+        url = reverse("articles:commentdetail", args=[slug, comment_id])
+        return self.client.put(
+            url,
+            data=json.dumps(
+                {
+                    "body": body
+                }
+            ),
+            content_type="application/json"
+        )
+
+    def delete_comment_for_history(self):
+        comment_id = str(self.comment_hist.id)
+        slug = str(self.article.slug)
+        url = reverse("articles:commentdetail", args=[slug, comment_id])
+        return self.client.delete(
+            url,
+            content_type="application/json"
+        )
+    
+    def get_one_comment_history(self):
+        comment_id = str(self.comment_hist.id)
+        slug = str(self.article.slug)
+        url = reverse("articles:history_", args=[slug, comment_id, 1])
+        return self.client.get(
+            url,
+            content_type="application/json"
+        )
+
+    def get_one_comment_history_not_found(self):
+        comment_id = str(self.comment_hist.id)
+        slug = str(self.article.slug)
+        url = reverse("articles:history_", args=[slug, comment_id, 10])
+        return self.client.get(
+            url,
+            content_type="application/json"
+        )
+
+    def get_all_comment_history(self):
+        comment_id = str(self.comment_hist.id)
+        slug = str(self.article.slug)
+        url = reverse("articles:history_comments", args=[slug, comment_id])
+        return self.client.get(
+            url,
+            content_type="application/json"
+        )
+
+    def get_all_comment_history_not_found(self):
+        slug = str(self.article.slug)
+        url = reverse("articles:history_comments", args=[slug, 234])
+        return self.client.get(
+            url,
+            content_type="application/json"
+        )
 
     def delete_comment_succefully(self):
         """if

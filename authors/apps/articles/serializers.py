@@ -9,7 +9,7 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 
 from .exceptions import ArticleNotFound
-from .models import Article, Comment, Favorite, RatingModel
+from .models import Article, Comment, Favorite, RatingModel, CommentHistory
 
 
 class ArticleSerializer(BaseSerializer):
@@ -197,16 +197,20 @@ class CommentChildSerializer(serializers.ModelSerializer):
         fields = ('id', 'body', 'created_at', 'author', 'parent')
 
 
-class CommentDetailSerializer(serializers.ModelSerializer):
+class CommentDetailSerializer(BaseSerializer):
     """
     Comments with replies serializer
     """
+
+    def __init__(self, *args, **kwargs):
+        super(CommentDetailSerializer, self).__init__(*args, **kwargs)
+
     replies = serializers.SerializerMethodField()
 
     class Meta:
         model = Comment
         fields = ('id', 'author', 'body', 'article',
-                  'created_at', 'replies', 'parent')
+                  'created_at', 'updated_at', 'replies', 'parent',)
 
     @staticmethod
     def get_replies(obj):
@@ -216,3 +220,20 @@ class CommentDetailSerializer(serializers.ModelSerializer):
         if obj.is_parent:
             return CommentChildSerializer(obj.children(), many=True).data
         return None
+
+
+class CommentEditHistorySerializer(BaseSerializer):
+    """
+    A class serializer for comments history
+    """
+
+    def __init__(self, *args, **kwargs):
+        super(CommentEditHistorySerializer, self).__init__(*args, **kwargs)
+
+    created_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S")
+
+    class Meta:
+        model = CommentHistory
+        fields = (
+            'id', 'body', 'created_at'
+        )

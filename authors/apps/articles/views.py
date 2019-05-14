@@ -12,8 +12,10 @@ from rest_framework.views import APIView
 
 from ...utils.social_share_utils import generate_share_url
 from .exceptions import ArticleNotFound, Forbidden, ItemDoesNotExist
+from .models import (Article, Comment,
+                     Favorite, RatingModel,
+                     Tag, CommentHistory)
 from .filters import ArticleFilter
-from .models import Article, Comment, Favorite, RatingModel, Tag
 from .serializers import (ArticlePaginator, ArticleSerializer,
                           CommentChildSerializer, CommentDetailSerializer,
                           CommentSerializer,
@@ -21,7 +23,7 @@ from .serializers import (ArticlePaginator, ArticleSerializer,
                           DisplaySingleComment,
                           FavoritesSerializer,
                           RatingSerializer,
-                          add_tag_list)
+                          add_tag_list, CommentEditHistorySerializer)
 
 
 def get_serialiser_data(serializer_data, content):
@@ -142,14 +144,14 @@ class RetrieveUpdateArticleAPIView(GenericAPIView):
     serializer_class = ArticleSerializer
 
     def retrieve_article(self, slug):
-            """
-            Fetch one article
-            """
-            try:
-                article = Article.objects.get(slug=slug)
-                return article
-            except Article.DoesNotExist:
-                raise ArticleNotFound
+        """
+        Fetch one article
+        """
+        try:
+            article = Article.objects.get(slug=slug)
+            return article
+        except Article.DoesNotExist:
+            raise ArticleNotFound
 
     def get(self, request, slug):
         """
@@ -226,7 +228,7 @@ class RetrieveUpdateArticleAPIView(GenericAPIView):
                 status.HTTP_403_FORBIDDEN)
         return Response({
             "message": "Article '{}' deleted".format(article.title)},
-                        status.HTTP_200_OK)
+            status.HTTP_200_OK)
 
 
 class FetchTags(GenericAPIView):
@@ -553,13 +555,37 @@ class CommentDetailAPIView(GenericAPIView):
             slug = kwargs['slug']
             comment_obj = Comment.objects.get(pk=Id)
             article = get_object_or_404(Article, slug=slug)
-            if comment_obj.author == request.user:
+            comment_body = comment_obj.body
+            input_comment = comment.get("body").strip()
+            db_comment = comment_body.strip()
+            if comment_obj.author == request.user and \
+                    input_comment == db_comment:
+                serializer = self.serializer_class(
+                    comment_obj, context={'comment': Id},)
+                comment_string = "No changes detected on the comment"
+                return Response({
+                    "comment": serializer.data,
+                    "message": comment_string
+                })
+            elif comment_obj.author == request.user:
+                history_serializer = CommentEditHistorySerializer(
+                    data={"body": comment_body},
+                    remove_fields=['id', 'created_at']
+                )
+                history_serializer.is_valid(raise_exception=True)
+                history_serializer.save(commentId=comment_obj)
                 comment['author'] = request.user.id
                 comment['article'] = article.id
-                serializer = self.serializer_class(comment_obj, data=comment)
+                serializer = self.serializer_class(
+                    comment_obj, data=comment, context={'comment': Id},
+                )
                 serializer.is_valid(raise_exception=True)
                 serializer.save()
-                return Response(serializer.data)
+                comment_string = "Comment updated successfuly"
+                return Response({
+                    "comment": serializer.data,
+                    "message": comment_string
+                })
             else:
                 raise Forbidden
         except Comment.DoesNotExist:
@@ -569,7 +595,7 @@ class CommentDetailAPIView(GenericAPIView):
                         "body": ["unsuccesful update either the comment or"
                                  "slug not found"
                                  ]}},
-                status=status.HTTP_400_BAD_REQUEST
+                status=status.HTTP_404_NOT_FOUND
             )
 
     def delete(self, request, **kwargs):
@@ -619,3 +645,61 @@ class SocialShareArticleView(APIView):
                 "message": "Please select a valid provider - twitter, "
                            "facebook, email, telegram, linkedin, reddit"
             }, status=200)
+
+
+class CommentOneHistoryView(GenericAPIView):
+    """
+    A view class for handling all operations made to
+    Comment history models directly
+    """
+    permission_classes = [IsAuthenticated]
+    serializer_class = CommentEditHistorySerializer
+
+    def get(self, request, slug, comment, id):
+        """
+        A view method to get one history comment for a comment
+        """
+        comment_history = CommentHistory.objects.all().filter(
+            id=id, commentId=comment).first()
+        serializer = self.serializer_class(comment_history, many=False)
+        if serializer.data.get("body") == "":
+            response = Response({
+                "error": "History comment selected does not exist"
+            }, status=status.HTTP_404_NOT_FOUND)
+        else:
+            response = Response({
+                "comment_history": serializer.data
+            }, status=status.HTTP_200_OK)
+        return response
+
+
+class CommentAllHistoryView(GenericAPIView):
+    """
+    A view class for handling all operations made to
+    Comment history models directly
+    """
+    permission_classes = [IsAuthenticated]
+    serializer_class = CommentEditHistorySerializer
+
+    def get(self, request, slug, comment):
+        """
+        A view method to get one history comment for a comment
+        """
+        comment_history = CommentHistory.objects.all().filter(
+            commentId=comment
+        )
+        comment_hist = []
+        if comment_history:
+            for history in comment_history:
+                serializer = self.serializer_class(history, many=False)
+                comment_data = serializer.data
+                comment_hist.append(comment_data)
+            response = Response({
+                "comments_history": comment_hist
+            }, status=status.HTTP_200_OK)
+        else:
+            response = Response({
+                "message": "No history comments",
+                "comment": comment_hist
+            }, status=status.HTTP_200_OK)
+        return response
