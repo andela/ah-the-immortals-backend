@@ -70,7 +70,7 @@ class ArticleSerializer(BaseSerializer):
             'slug', 'title', 'description', 'body', 'created_at',
             'updated_at', 'author', 'tagList', 'like', 'dislike',
             'likesCount', 'dislikesCount', 'comments', 'favorite',
-            'favoritesCount'
+            'favoritesCount', 'readtime'
         )
 
 

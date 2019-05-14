@@ -11,6 +11,7 @@ import json
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from .utils import get_comments
+from authors.utils.article_timer import ArticleTimer
 
 User = get_user_model()
 
@@ -98,6 +99,11 @@ class Article(VoteModel, models.Model):
         """
         comments = Comment.objects.filter(article__slug=self.slug)
         return get_comments(comments)
+
+    @property
+    def readtime(self):
+        timer = ArticleTimer(self)
+        return timer.get_read_time()
 
 
 class Comment(models.Model):
