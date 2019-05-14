@@ -28,6 +28,8 @@ notificationsurls = include('authors.apps.appnotifications.urls',
                             namespace="notifications")
 articleurls = include(('authors.apps.articles.urls', 'articles'),
                       namespace='article')
+escalationurls = include(('authors.apps.escalation.urls', 'escalation'),
+                         namespace='escalation')
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', authurls),
@@ -37,4 +39,5 @@ urlpatterns = [
     path('api/', notificationsurls),
     path('', RedirectView.as_view(url='/api/swagger/')),
     path('api/', articleurls),
+    path('api/', escalationurls),
 ]
