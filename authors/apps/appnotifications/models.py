@@ -16,8 +16,8 @@ class UserNotification(models.Model):
 
     user = models.OneToOneField(User, on_delete=models.CASCADE, unique=True,
                                 related_name='notification_preferences')
-    email_notifications_subscription = models.BooleanField(default=True)
-    in_app_notifications_subscription = models.BooleanField(default=True)
+    email_notifications = models.BooleanField(default=True)
+    in_app_notifications = models.BooleanField(default=True)
 
 
 @receiver(post_save, sender=User)
@@ -28,7 +28,7 @@ def setup_notification_permissions(sender, **kwargs):
     if created:
         data = {
             'user': instance,
-            'email_notifications_subscription': True,
-            'in_app_notifications_subscription': True
+            'email_notifications': True,
+            'in_app_notifications': True
         }
         UserNotification.objects.create(**data)

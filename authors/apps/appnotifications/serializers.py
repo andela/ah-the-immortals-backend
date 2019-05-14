@@ -12,8 +12,8 @@ class Subscription(serializers.ModelSerializer):
     """
     class Meta:
         model = UserNotification
-        fields = ('email_notifications_subscription',
-                  'in_app_notifications_subscription')
+        fields = ('email_notifications',
+                  'in_app_notifications')
 
 
 class NotificationSerializer(serializers.ModelSerializer):
