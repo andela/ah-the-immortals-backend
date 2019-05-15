@@ -11,6 +11,8 @@ class NotificationBaseTest(BaseTest):
     notification_url = reverse("notifications:all-notifications")
     unread_notification_url = reverse("notifications:unread-notifications")
     subscribe_unsubscribe_url = reverse("notifications:subscription")
+    delete_single_url = reverse("notifications:deleteone", args=[2])
+    delete_single_invalid_id = reverse("notifications:deleteone", args=[56])
 
     def follow_user(self):
         self.is_authenticated("jim@gmail.com", "@Us3r.com")

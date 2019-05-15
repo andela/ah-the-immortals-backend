@@ -102,3 +102,23 @@ class UnreadNotificationsAPIview(NotificationApiView):
     def notifications(self, request):
         request.user.notifications.unread()
         return request.user.notifications.active()
+
+
+class DeleteSingleNotificationAPIView(NotificationApiView):
+    """
+    delete a single notification
+    """
+
+    def delete(self, request, *args, **kwargs):
+        try:
+            notif = request.user.notifications.active().get(id=kwargs['id'])
+            notif.deleted = True
+            notif.save()
+            resp = {
+                'message': 'Notification deleted successfully'
+            }
+        except Exception:
+            resp = {
+                'message': 'No notification found with that id'
+            }
+        return Response(resp)
