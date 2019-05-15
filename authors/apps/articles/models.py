@@ -121,9 +121,6 @@ class Comment(models.Model):
     class Meta:
         ordering = ['-created_at']
 
-    # def __str__(self):
-    #     return self.body
-
     def children(self):
         return Comment.objects.filter(parent=self)
 
@@ -140,7 +137,9 @@ class Comment(models.Model):
         """
         Representation of a comment in a JSON serializable format
         """
-
+        parent = self.parent
+        if self.parent:
+            parent = self.parent.pk
         response = {
             "id": self.pk,
             "article": {
@@ -150,7 +149,8 @@ class Comment(models.Model):
             "createdAt": self.created_at,
             "updatedAt": self.updated_at,
             "body": self.body,
-            "author": self.get_profile_details()
+            "author": self.get_profile_details(),
+            "parent": parent
         }
         return response
 
