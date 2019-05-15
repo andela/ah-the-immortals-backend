@@ -119,6 +119,15 @@ class Article(VoteModel, models.Model):
         timer = ArticleTimer(self)
         return timer.get_read_time()
 
+    def is_bookmarked(self, request):
+        user = request.user
+        bookmarked = False
+        bookmarks = Bookmarks.objects.filter(
+            user__pk=user.pk, article__pk=self.pk)
+        if bookmarks:
+            bookmarked = True
+        return bookmarked
+
 
 class Comment(models.Model):
     """
@@ -257,3 +266,12 @@ class CommentHistory(models.Model):
     commentId = models.ForeignKey(Comment, on_delete=models.CASCADE)
     body = models.TextField(null=False, blank=False)
     created_at = models.DateTimeField(auto_now_add=True)
+
+
+class Bookmarks(models.Model):
+    """
+    Models for Bookmarking
+    """
+    article_slug = models.CharField(max_length=225)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    article = models.ForeignKey(Article, on_delete=models.CASCADE)

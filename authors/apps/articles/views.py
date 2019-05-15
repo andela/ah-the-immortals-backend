@@ -11,11 +11,11 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from ...utils.social_share_utils import generate_share_url
-from .exceptions import ArticleNotFound, Forbidden, ItemDoesNotExist
-from .models import (Article, Comment,
-                     Favorite, RatingModel,
-                     Tag, CommentHistory)
+from .exceptions import (ArticleNotFound, Forbidden,
+                         ItemDoesNotExist, BookmarkDoesNotExist)
+from .models import Article, Comment, Favorite, RatingModel, Tag, Bookmarks
 from .filters import ArticleFilter
+
 from .serializers import (ArticlePaginator, ArticleSerializer,
                           CommentChildSerializer, CommentDetailSerializer,
                           CommentSerializer,
@@ -23,7 +23,9 @@ from .serializers import (ArticlePaginator, ArticleSerializer,
                           DisplaySingleComment,
                           FavoritesSerializer,
                           RatingSerializer,
-                          add_tag_list, CommentEditHistorySerializer)
+                          add_tag_list, CommentEditHistorySerializer,
+                          BookmarkSerializers,
+                          add_tag_list)
 
 
 def get_serialiser_data(serializer_data, content):
@@ -699,3 +701,97 @@ class CommentAllHistoryView(GenericAPIView):
                 "comment": comment_hist
             }, status=status.HTTP_200_OK)
         return response
+
+
+class BookmarkAPIView(GenericAPIView):
+    """
+    class for posting a bookmark
+    """
+    permission_classes = (IsAuthenticated,)
+    serializer_class = BookmarkSerializers
+
+    def post(self, request, **kwargs):
+        """
+        Bookmark an article
+        """
+        try:
+            user = request.user
+            slug = self.kwargs['slug']
+            article = Article.objects.get(slug=slug)
+            bookmarks = Bookmarks.objects.filter(user=user, article=article)
+            if bookmarks:
+                response = Response({
+                    'errors': {
+                        'body': ['You already bookmarked this article']
+                    }
+                }, status=status.HTTP_400_BAD_REQUEST)
+            else:
+                bookmark_data = Bookmarks()
+                bookmark_data = {
+                    "article_slug": article.slug,
+                    "user": request.user.id,
+                    "article": article.id
+                }
+                serializer = self.serializer_class(data=bookmark_data)
+                serializer.is_valid(raise_exception=True)
+                serializer.save()
+                return Response(serializer.data, status.HTTP_201_CREATED)
+            return Response({"message": "Article has been bookmarked"},
+                            status.HTTP_201_CREATED)
+        except Article.DoesNotExist:
+            raise ArticleNotFound
+
+
+class GetBookMarksAPIVIew(GenericAPIView):
+    """
+    class for  getting bookmarks
+    """
+    permission_classes = (IsAuthenticated,)
+    serializer_class = ArticleSerializer
+
+    def get(self, request):
+        """
+        Get all bookmarks for a user
+        """
+        user = request.user
+        bookmarks = Bookmarks.objects.all().filter(user=user)
+        if not bookmarks:
+            return Response({"message": "Bookmarks not found"},
+                            status.HTTP_404_NOT_FOUND)
+        articles = []
+        for bookmark in bookmarks:
+            article = bookmark.article
+            articles.append({
+                "bookmark_id": bookmark.pk,
+                "slug": article.slug,
+                "title": article.title,
+                "body": article.body,
+                "bookmarked": article.is_bookmarked(request)
+            })
+        data = {
+            "articles": articles
+        }
+        return Response(data, status.HTTP_200_OK)
+
+
+class DeleteBookMakeAPIView(GenericAPIView):
+    """
+    class for deleting a bookmark
+    """
+    permission_classes = (IsAuthenticated,)
+    serializer_class = BookmarkSerializers
+
+    def delete(self, request, **kwargs):
+        """
+        Remove a bookmark
+        """
+        try:
+            book = Bookmarks.objects.get(id=kwargs['id'])
+            if request.user == book.user:
+                book.delete()
+                return Response({"message": "Bookmark has been removed"},
+                                status.HTTP_200_OK)
+            return Response({"message": "Permission denied"},
+                            status.HTTP_403_FORBIDDEN)
+        except Bookmarks.DoesNotExist:
+            raise BookmarkDoesNotExist

@@ -9,7 +9,7 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 
 from .exceptions import ArticleNotFound
-from .models import Article, Comment, Favorite, RatingModel, CommentHistory
+from .models import Article, Comment, Favorite, RatingModel, Bookmarks, CommentHistory
 
 
 class ArticleSerializer(BaseSerializer):
@@ -259,3 +259,17 @@ class CommentEditHistorySerializer(BaseSerializer):
         fields = (
             'id', 'body', 'created_at'
         )
+
+
+class BookmarkSerializers(serializers.ModelSerializer):
+    """
+    Bookmarks serializer class
+    """
+
+    def to_representation(self, instance):
+        response = super().to_representation(instance)
+        return response
+
+    class Meta:
+        model = Bookmarks
+        fields = ['id', 'article_slug', 'user', 'article']
