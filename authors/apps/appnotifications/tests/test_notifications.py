@@ -92,3 +92,27 @@ class TestNotifications(NotificationBaseTest):
         response = self.client.delete(self.notification_url)
         self.assertEqual(response.data['message'], 'No notifications found')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_delete_one_notifications_successfully(self):
+        """
+        Test deletion of a single notification
+        """
+        self.follow_user()
+        self.create_article()
+        self.is_authenticated("jim@gmail.com", "@Us3r.com")
+        response = self.client.delete(self.delete_single_url)
+        self.assertEqual(response.data['message'],
+                         'Notification deleted successfully')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_delete_one_notifications_unsuccessfully(self):
+        """
+        Test deletion of a single notification provided invalid id
+        """
+        self.follow_user()
+        self.create_article()
+        self.is_authenticated("jim@gmail.com", "@Us3r.com")
+        response = self.client.delete(self.delete_single_invalid_id)
+        self.assertEqual(response.data['message'],
+                         'No notification found with that id')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)

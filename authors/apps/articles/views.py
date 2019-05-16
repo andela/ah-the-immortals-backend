@@ -83,9 +83,8 @@ class ListCreateArticleAPIView(ListCreateAPIView):
         article["author"] = request.user.pk
         serializer = self.serializer_class(
             data=article,
-            remove_fields=['like', 'created_at', 'updated_at',
-                           'favorite', 'dislike', 'likesCount',
-                           'dislikesCount', 'ratings'])
+            remove_fields=['like_info', 'created_at', 'updated_at',
+                           'favorites', 'ratings'])
         serializer.is_valid(raise_exception=True)
         article = serializer.save(author=request.user)
         data = serializer.data
@@ -120,10 +119,9 @@ class ListCreateArticleAPIView(ListCreateAPIView):
         paginator.page_size = page_limit
         result = paginator.paginate_queryset(articles, request)
         serializer = ArticleSerializer(result, many=True,
-                                       remove_fields=['like',
+                                       remove_fields=['like_info',
                                                       'comments',
-                                                      'favorite',
-                                                      'dislike',
+                                                      'favorites',
                                                       'ratings'])
         response = paginator.get_paginated_response({
             "articles": serializer.data
@@ -141,14 +139,14 @@ class RetrieveUpdateArticleAPIView(GenericAPIView):
     serializer_class = ArticleSerializer
 
     def retrieve_article(self, slug):
-            """
-            Fetch one article
-            """
-            try:
-                article = Article.objects.get(slug=slug)
-                return article
-            except Article.DoesNotExist:
-                raise ArticleNotFound
+        """
+        Fetch one article
+        """
+        try:
+            article = Article.objects.get(slug=slug)
+            return article
+        except Article.DoesNotExist:
+            raise ArticleNotFound
 
     def get(self, request, slug):
         """
@@ -177,10 +175,8 @@ class RetrieveUpdateArticleAPIView(GenericAPIView):
                 instance=article,
                 data=request.data,
                 partial=True,
-                remove_fields=['like', 'created_at', 'updated_at',
-                               'favorite', 'dislike', 'likesCount',
-                               'dislikesCount',
-                               'ratings']
+                remove_fields=['like_info', 'created_at', 'updated_at',
+                               'favorites', 'ratings']
             )
             serializer.is_valid(raise_exception=True)
             article = serializer.save()
@@ -312,8 +308,6 @@ class LikeDislikeView(GenericAPIView):
         """
         A method to delete a vote for a certain article
         """
-
-        # def get_vot_response(votetype):
 
         response, voted = self.process_vote_type(request, slug, vote_type)
         if voted:

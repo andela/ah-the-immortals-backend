@@ -21,6 +21,8 @@ class ArticleSerializer(BaseSerializer):
         super(ArticleSerializer, self).__init__(*args, **kwargs)
 
     author = serializers.ReadOnlyField(source="get_author_details")
+    like_info = serializers.SerializerMethodField()
+    favorites = serializers.SerializerMethodField()
 
     def get_user_article(self):
         request = self.context.get('request', None)
@@ -52,6 +54,14 @@ class ArticleSerializer(BaseSerializer):
         like = self.get_likes(1)
         return like
 
+    def get_likes_count(self, obj):
+        article = self.get_likes_data()
+        return article.votes.count()
+
+    def get_dislikes_count(self, obj):
+        article = self.get_likes_data()
+        return article.votes.count(1)
+
     def get_favorite(self, instance):
         user, article = self.get_user_article()
         is_favorited = Favorite().is_favorited(user, article)
@@ -63,20 +73,32 @@ class ArticleSerializer(BaseSerializer):
         ratings = RatingModel().ratings(article.id, request.user.id)
         return ratings
 
-    like = serializers.SerializerMethodField()
-    dislike = serializers.SerializerMethodField()
-    favorite = serializers.SerializerMethodField()
-    likesCount = serializers.ReadOnlyField(source='num_vote_up')
-    dislikesCount = serializers.ReadOnlyField(source='num_vote_down')
+    def get_like_info(self, obj):
+        mapped_data = {
+            "like": self.get_like(self),
+            "dislike": self.get_dislike(self),
+            "likeCount": self.get_likes_count(self),
+            "dislikeCount": self.get_dislikes_count(self)
+        }
+
+        return mapped_data
+
+    def get_favorites(self, obj):
+        mapped_data = {
+            "favorite": self.get_favorite(self),
+            "favoritesCount": obj.favoritesCount,
+        }
+
+        return mapped_data
+
     ratings = serializers.SerializerMethodField()
 
     class Meta:
         model = Article
         fields = (
             'slug', 'title', 'description', 'body', 'created_at',
-            'updated_at', 'author', 'ratings', 'tagList', 'like', 'dislike',
-            'likesCount', 'dislikesCount', 'comments', 'favorite',
-            'favoritesCount', 'readtime'
+            'updated_at', 'author', 'comments', 'tagList',
+            'ratings', 'like_info', 'favorites', 'readtime'
         )
 
 
