@@ -79,7 +79,7 @@ class TestComments(BaseTest):
         Test update comment unsecceful
         """
         response = self.update_comment_unsuccefully()
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(json.loads(response.content), {
                          'error': {'body': [self.no_update]}})
 
@@ -89,6 +89,34 @@ class TestComments(BaseTest):
         """
         response = self.update_comment_succefully()
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_update_comment_successful_history_twice(self):
+        """
+        Test update comment successful
+        """
+        self.is_authenticated("adam@gmail.com", "@Us3r.com")
+        self.update_comment_exist_in_history("I love myself")
+        response = self.update_comment_exist_in_history("I love myself")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data.get("message"), "No changes detected on the comment")
+    
+    def test_update_comment_not_own_history(self):
+        """
+        Test update comment successful
+        """
+        self.is_authenticated("jim@gmail.com", "@Us3r.com")
+        response = self.update_comment_exist_in_history("I love myself")
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.data.get("detail"), "You cannot edit or delete a comment you dont own")
+
+    def test_delete_comment_not_own_history(self):
+        """
+        Test update comment successful
+        """
+        self.is_authenticated("jim@gmail.com", "@Us3r.com")
+        response = self.delete_comment_for_history()
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.data.get("detail"), "You cannot edit or delete a comment you dont own")
 
     def test_successful_get_one_comment(self):
         """
@@ -128,3 +156,45 @@ class TestComments(BaseTest):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['comment']['body'], comment.body)
         self.assertEqual(response.data['comment']['parent'], None)
+
+    def test_get_history_comment(self):
+        """
+        Test update comment with post history comment
+        """
+        self.is_authenticated("adam@gmail.com", "@Us3r.com")
+        self.update_comment_exist_in_history("I love this program")
+        response = self.get_one_comment_history()
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data.get("comment_history").get("body"),
+                         "This is a test history comment")
+
+    def test_get_history_comment_all(self):
+        """
+        Test update comment with post history comment
+        """
+        self.is_authenticated("adam@gmail.com", "@Us3r.com")
+        self.update_comment_exist_in_history("I love this program Some more")
+        response = self.get_all_comment_history()
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data.get("comments_history")[0].get("body"),
+                         "This is a test history comment")
+
+    def test_get_history_comment_no_history(self):
+        """
+        Test update comment with post history comment
+        """
+        self.is_authenticated("adam@gmail.com", "@Us3r.com")
+        response = self.get_one_comment_history_not_found()
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.data.get("error"),
+                         "History comment selected does not exist")
+
+    def test_get_history_comment_all_no_history(self):
+        """
+        Test update comment with post history comment
+        """
+        self.is_authenticated("adam@gmail.com", "@Us3r.com")
+        response = self.get_all_comment_history_not_found()
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data.get("message"),
+                         "No history comments")

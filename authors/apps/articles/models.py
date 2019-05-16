@@ -13,6 +13,7 @@ from django.dispatch import receiver
 from .utils import get_comments
 from authors.utils.article_timer import ArticleTimer
 
+
 User = get_user_model()
 
 
@@ -129,7 +130,7 @@ class Comment(models.Model):
     parent = models.ForeignKey(
         'self', null=True, blank=True, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         ordering = ['-created_at']
@@ -247,3 +248,12 @@ class RatingModel(models.Model):
                 "average_ratings": Article().average_ratings(article)
             }
         return 0
+
+
+class CommentHistory(models.Model):
+    """
+    A class model for saving history comments by id
+    """
+    commentId = models.ForeignKey(Comment, on_delete=models.CASCADE)
+    body = models.TextField(null=False, blank=False)
+    created_at = models.DateTimeField(auto_now_add=True)
