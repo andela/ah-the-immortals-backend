@@ -57,6 +57,7 @@ INSTALLED_APPS = [
     'authors.apps.profiles',
     'authors.apps.appnotifications',
     'authors.apps.articles',
+    'authors.apps.highlights',
     'django_filters',
 ]
 
