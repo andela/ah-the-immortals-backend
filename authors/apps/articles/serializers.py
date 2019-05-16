@@ -69,15 +69,19 @@ class ArticleSerializer(BaseSerializer):
     likesCount = serializers.ReadOnlyField(source='num_vote_up')
     dislikesCount = serializers.ReadOnlyField(source='num_vote_down')
     ratings = serializers.SerializerMethodField()
+    image_url = serializers.ReadOnlyField(source='get_image')
 
     class Meta:
         model = Article
         fields = (
-            'slug', 'title', 'description', 'body', 'created_at',
-            'updated_at', 'author', 'ratings', 'tagList', 'like', 'dislike',
-            'likesCount', 'dislikesCount', 'comments', 'favorite',
-            'favoritesCount', 'readtime'
+            'slug', 'title', 'description', 'body', 'image', 'image_url',
+            'created_at', 'updated_at', 'author', 'ratings', 'tagList',
+            'like', 'dislike', 'likesCount', 'dislikesCount', 'comments',
+            'favorite', 'favoritesCount', 'readtime'
         )
+        extra_kwargs = {
+            'image': {'write_only': True, 'required': False}
+        }
 
 
 def add_tag_list(tag_names, article):

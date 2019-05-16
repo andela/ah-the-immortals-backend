@@ -62,8 +62,11 @@ class Article(VoteModel, models.Model):
         """
         Retrieve article image
         """
-        image_url = CloudinaryImage(str(self.image)).build_url(crop='fill')
-        return image_url
+        try:
+            image_url = CloudinaryImage(str(self.image)).build_url(crop='fill')
+            return image_url
+        except Exception:
+            return "No image uploaded"
 
     def get_author_details(self):
         """

@@ -24,7 +24,7 @@ class TestReadTime(BaseTest):
 
     def test_article_post_read_time(self):
         """
-        Tests read time of an article during post 
+        Tests read time of an article during post
         """
         response = self.create_article()
         self.assertEqual(
@@ -43,7 +43,7 @@ class TestReadTime(BaseTest):
         response = self.update_article()
         self.assertEqual(
             response.status_code,
-            status.HTTP_201_CREATED
+            status.HTTP_200_OK
         )
         self.assertEqual(
             response.data.get("article").get("readtime"),

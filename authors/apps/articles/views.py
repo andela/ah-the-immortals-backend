@@ -194,7 +194,7 @@ class RetrieveUpdateArticleAPIView(GenericAPIView):
                 data={
                     "article": data
                 },
-                status=status.HTTP_201_CREATED
+                status=status.HTTP_200_OK
             )
         else:
             return Response(
@@ -223,7 +223,8 @@ class RetrieveUpdateArticleAPIView(GenericAPIView):
                     "Cannot delete an article that is not yours"
                 ]}},
                 status.HTTP_403_FORBIDDEN)
-        return Response({"message": "Article deleted"},
+        return Response({
+            "message": "Article '{}' deleted".format(article.title)},
                         status.HTTP_200_OK)
 
 
