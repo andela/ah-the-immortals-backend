@@ -10,8 +10,8 @@ class TestReadTime(BaseTest):
     def setUp(self):
         super().setUp()
         self.new_article["body"] = self.word_generator(795)
-        self.minutes_time = "3 minutes"
-        self.seconds_time = "3 seconds"
+        self.minutes_time = "3 minute(s)"
+        self.seconds_time = "13 second(s)"
 
     def word_generator(self, num_words):
         """
