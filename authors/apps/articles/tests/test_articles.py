@@ -10,7 +10,7 @@ class TestArticles(BaseTest):
     slug2 = "this-is-mine"
     description = "I do not want it"
     updated = "Brian Koin is making noise"
-    msg = "Article deleted"
+    msg = "Article 'this is mine' deleted"
     error = "Article does not exist"
     unauthorized = "Cannot edit an article that is not yours"
     forbidden = "Cannot delete an article that is not yours"
@@ -46,7 +46,7 @@ class TestArticles(BaseTest):
         Test update one article
         """
         response = self.update_article()
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data.get("article").get("description"),
                          self.updated)
 

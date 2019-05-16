@@ -200,7 +200,7 @@ class TestUpdateTags(TagsBaseTest):
         )
         self.assertEqual(
             response.status_code,
-            status.HTTP_201_CREATED
+            status.HTTP_200_OK
         )
 
     def test_maintaining_original_tags(self):
@@ -215,7 +215,7 @@ class TestUpdateTags(TagsBaseTest):
         )
         self.assertEqual(
             response.status_code,
-            status.HTTP_201_CREATED
+            status.HTTP_200_OK
         )
 
 
