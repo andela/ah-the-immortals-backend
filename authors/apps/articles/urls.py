@@ -6,7 +6,6 @@ from .views import (CommentAPIView, CommentDetailAPIView, FavoritesView,
                     ListUserFavoriteArticlesView, RateArticleAPIView,
                     RetrieveUpdateArticleAPIView)
 
-# from .filters import FilterArticlesView
 
 app_name = 'articles'
 

@@ -1,13 +1,12 @@
 import json
 from collections import OrderedDict
 
+from authors.apps.articles.models import Tag
+from authors.utils.baseserializer import BaseSerializer
 from django.db.models import Avg
 from rest_framework import serializers
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
-
-from authors.apps.articles.models import Tag
-from authors.utils.baseserializer import BaseSerializer
 
 from .exceptions import ArticleNotFound
 from .models import Article, Comment, Favorite, RatingModel
@@ -58,17 +57,24 @@ class ArticleSerializer(BaseSerializer):
         is_favorited = Favorite().is_favorited(user, article)
         return is_favorited
 
+    def get_ratings(self, obj):
+        article = self.get_likes_data()
+        request = self.context.get('request', None)
+        ratings = RatingModel().ratings(article.id, request.user.id)
+        return ratings
+
     like = serializers.SerializerMethodField()
     dislike = serializers.SerializerMethodField()
     favorite = serializers.SerializerMethodField()
     likesCount = serializers.ReadOnlyField(source='num_vote_up')
     dislikesCount = serializers.ReadOnlyField(source='num_vote_down')
+    ratings = serializers.SerializerMethodField()
 
     class Meta:
         model = Article
         fields = (
             'slug', 'title', 'description', 'body', 'created_at',
-            'updated_at', 'author', 'tagList', 'like', 'dislike',
+            'updated_at', 'author', 'ratings', 'tagList', 'like', 'dislike',
             'likesCount', 'dislikesCount', 'comments', 'favorite',
             'favoritesCount', 'readtime'
         )

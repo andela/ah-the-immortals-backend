@@ -48,7 +48,8 @@ class Article(VoteModel, models.Model):
     body = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    author = models.ForeignKey(User, on_delete=models.CASCADE)
+    author = models.ForeignKey(
+        User, related_name='rated_article', on_delete=models.CASCADE)
     tags = models.ManyToManyField(Tag)
     favorited = models.BooleanField(default=False)
     favoritesCount = models.PositiveSmallIntegerField(default=0)
@@ -74,6 +75,15 @@ class Article(VoteModel, models.Model):
             "image": self.author.profile.fetch_image,
             "following": self.author.profile.following.reverse
         }
+
+    def average_ratings(self, id):
+        import math
+        user_ratings = RatingModel.objects.filter(article__pk=id)
+        average = 0
+        if user_ratings:
+            total = sum([rating.rate for rating in user_ratings])
+            average = total/user_ratings.count()
+        return float('%.1f' % (average))
 
     @property
     def tagList(self):
@@ -213,3 +223,24 @@ class RatingModel(models.Model):
             "created_at": self.article.created_at,
             "updated_at": self.article.updated_at
         }
+
+    def ratings(self, article, user):
+        """
+        Model to display rating for users in an articles
+        """
+
+        try:
+            article = self.article
+            user = self.rated_by
+        except Article.DoesNotExist:
+            pass
+
+        queryset = RatingModel.objects.filter(
+            article_id=article, rated_by_id=user).first()
+
+        if queryset:
+            return {
+                "my_ratings": queryset.rate,
+                "average_ratings": Article().average_ratings(article)
+            }
+        return 0

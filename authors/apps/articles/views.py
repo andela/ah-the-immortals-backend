@@ -1,18 +1,18 @@
 from django.core.exceptions import ObjectDoesNotExist
 from django.shortcuts import get_object_or_404, render
+from django_filters import rest_framework as filters
 from rest_framework import permissions, status
 from rest_framework.exceptions import APIException, ValidationError
+from rest_framework.filters import SearchFilter
 from rest_framework.generics import GenericAPIView, ListCreateAPIView
 from rest_framework.permissions import (AllowAny, IsAuthenticated,
                                         IsAuthenticatedOrReadOnly)
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from django_filters import rest_framework as filters
-from rest_framework.filters import SearchFilter
 
 from .exceptions import ArticleNotFound, Forbidden, ItemDoesNotExist
-from .models import Article, Comment, Favorite, RatingModel, Tag
 from .filters import ArticleFilter
+from .models import Article, Comment, Favorite, RatingModel, Tag
 from .serializers import (ArticlePaginator, ArticleSerializer,
                           CommentChildSerializer, CommentDetailSerializer,
                           CommentSerializer,
@@ -85,7 +85,7 @@ class ListCreateArticleAPIView(ListCreateAPIView):
             data=article,
             remove_fields=['like', 'created_at', 'updated_at',
                            'favorite', 'dislike', 'likesCount',
-                           'dislikesCount'])
+                           'dislikesCount', 'ratings'])
         serializer.is_valid(raise_exception=True)
         article = serializer.save(author=request.user)
         data = serializer.data
@@ -123,7 +123,8 @@ class ListCreateArticleAPIView(ListCreateAPIView):
                                        remove_fields=['like',
                                                       'comments',
                                                       'favorite',
-                                                      'dislike'])
+                                                      'dislike',
+                                                      'ratings'])
         response = paginator.get_paginated_response({
             "articles": serializer.data
         })
@@ -140,14 +141,14 @@ class RetrieveUpdateArticleAPIView(GenericAPIView):
     serializer_class = ArticleSerializer
 
     def retrieve_article(self, slug):
-        """
-        Fetch one article
-        """
-        try:
-            article = Article.objects.get(slug=slug)
-            return article
-        except Article.DoesNotExist:
-            raise ArticleNotFound
+            """
+            Fetch one article
+            """
+            try:
+                article = Article.objects.get(slug=slug)
+                return article
+            except Article.DoesNotExist:
+                raise ArticleNotFound
 
     def get(self, request, slug):
         """
@@ -178,7 +179,8 @@ class RetrieveUpdateArticleAPIView(GenericAPIView):
                 partial=True,
                 remove_fields=['like', 'created_at', 'updated_at',
                                'favorite', 'dislike', 'likesCount',
-                               'dislikesCount']
+                               'dislikesCount',
+                               'ratings']
             )
             serializer.is_valid(raise_exception=True)
             article = serializer.save()
@@ -426,7 +428,7 @@ class ListUserFavoriteArticlesView(GenericAPIView):
 
 class RateArticleAPIView(GenericAPIView):
     """
-    Rating an article from 0 - 5
+    Rating an article from 1 - 5
     """
     permission_classes = (IsAuthenticatedOrReadOnly,)
 
@@ -444,7 +446,7 @@ class RateArticleAPIView(GenericAPIView):
         if article.author == request.user:
             raise ValidationError(
                 detail={
-                    "error": "Dang! You can't rate your own article"
+                    "error": "You can't rate your own article"
                 }
             )
 
@@ -458,21 +460,14 @@ class RateArticleAPIView(GenericAPIView):
 
         serializer.is_valid(raise_exception=True)
         serializer.save(article=article, rated_by=request.user)
-        articles = {
-            "slug": serializer.data['article']['slug'],
-            "title": serializer.data['article']['title'],
-            "description": serializer.data['article']['description'],
-            "body": serializer.data['article']['body'],
-            "created_at": serializer.data['article']['created_at'],
-            "updated_at": serializer.data['article']['updated_at']
-        }
+        serializer_article = ArticleSerializer(
+            article,
+            context={
+                'article': article.slug, 'request': request}
+        )
+        article_data = serializer_article.data
 
-        articles.update({'ratings': {
-            "my_rating": serializer.data.get('rate'),
-            "average_rating": serializer.data.get('average_rating')
-        }})
-
-        return Response(articles, status=status.HTTP_201_CREATED)
+        return Response(article_data, status=status.HTTP_201_CREATED)
 
 
 class CommentAPIView(GenericAPIView):

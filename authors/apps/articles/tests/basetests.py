@@ -559,6 +559,76 @@ class BaseTest(APITestCase):
         return self.client.get(reverse(
             "articles:commentdetail", args=["this-is-mine", id]))
 
+    def rate_article(self):
+        """
+        Pass slug to the url and post the ratings
+        """
+        slug = str(self.article.slug)
+        url = reverse("articles:rating_articles", args=[slug])
+        return self.client.post(
+            url,
+            data=json.dumps({
+                "rate": 4
+            }),
+            content_type="application/json"
+        )
+
+    def update_rate_article(self):
+        """
+        Pass slug to the url and post the ratings
+        """
+        slug = str(self.article.slug)
+        url = reverse("articles:rating_articles", args=[slug])
+        return self.client.post(
+            url,
+            data=json.dumps({
+                "rate": 3
+            }),
+            content_type="application/json"
+        )
+
+    def rate_article_more_than_five(self):
+        """
+        Pass slug to the url and post the ratings
+        """
+        slug = str(self.article.slug)
+        url = reverse("articles:rating_articles", args=[slug])
+        return self.client.post(
+            url,
+            data=json.dumps({
+                "rate": 7
+            }),
+            content_type="application/json"
+        )
+
+    def rate_article_less_than_one(self):
+        """
+        Pass slug to the url and post the ratings
+        """
+        slug = str(self.article.slug)
+        url = reverse("articles:rating_articles", args=[slug])
+        return self.client.post(
+            url,
+            data=json.dumps({
+                "rate": -1
+            }),
+            content_type="application/json"
+        )
+
+    def rate_non_existing_article(self):
+        """
+        Pass slug to the url and post the ratings
+        """
+        slug = "how-to-let-go"
+        url = reverse("articles:rating_articles", args=[slug])
+        return self.client.post(
+            url,
+            data=json.dumps({
+                "rate": 4
+            }),
+            content_type="application/json"
+        )
+
 
 class TagsBaseTest(APITestCase):
     """
