@@ -53,6 +53,7 @@ INSTALLED_APPS = [
 
     'authors.apps.authentication',
     'authors.apps.core',
+    'authors.apps.escalation',
     'authors.apps.profiles',
     'authors.apps.appnotifications',
     'authors.apps.articles',
