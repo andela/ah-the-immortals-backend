@@ -185,6 +185,29 @@ class BaseTest(APITestCase):
         user.is_verified = True
         user.save()
 
+    def generate_expired_auth_token(self):
+        """
+        Generates expired auth token
+        """
+        token = self.generate_auth_token()
+        token.created = timezone.now()-timezone.timedelta(hours=25)
+        token.save()
+        return token
+
+    def generate_auth_token(self):
+        """
+        Generates auth token
+        """
+        token, created = Token.objects.get_or_create(user=self.user)
+        return token
+
+    def generate_fake_auth_token(self):
+        """
+        Generates fake authentication token
+        """
+        token = "fjeojfoeefubbfbwuebbyvyfvwd24"
+        return token
+
 
 class PasswordResetBaseTest(BaseTest):
     """
@@ -218,7 +241,7 @@ class PasswordResetBaseTest(BaseTest):
             data=self.reset_data,
             format="json"
         )
-        token, created = Token.objects.get_or_create(user=self.user)
+        token = self.generate_auth_token()
         self.token = token.key
         self.set_password_confirm_url()
         return response
@@ -227,16 +250,14 @@ class PasswordResetBaseTest(BaseTest):
         """
         Generates invalid token
         """
-        self.token = "fjeojfoeefubbfbwuebbyvyfvwd24"
+        self.token = self.generate_fake_auth_token()
         self.set_password_confirm_url()
 
     def generate_expired_token(self):
         """
         Generates expired token
         """
-        token, created = Token.objects.get_or_create(user=self.user)
-        token.created = timezone.now()-timezone.timedelta(hours=25)
-        token.save()
+        token = self.generate_expired_auth_token()
         self.token = token.key
         self.set_password_confirm_url()
 

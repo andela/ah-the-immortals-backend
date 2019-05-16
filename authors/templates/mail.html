@@ -3,7 +3,7 @@
 <head>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-  <title>Confirm your account</title>
+  <title>Authors Heaven Email Veification</title>
   <style type="text/css" rel="stylesheet" media="all">
     /* Base ------------------------------ */
     *:not(br):not(tr):not(html) {
@@ -16,12 +16,12 @@
       height: 100%;
       margin: 0;
       line-height: 1.4;
-      background-color: white;
-      color: black;
+      background-color:white;
+      color:black;
       -webkit-text-size-adjust: none;
     }
     a {
-      color: #414EF9;
+      color: white;
     }
 
     /* Layout ------------------------------ */
@@ -94,7 +94,9 @@
     .align-right {
       text-align: right;
     }
-
+    .white-section a{
+      color: white;
+    }
     /* Type ------------------------------ */
     h1 {
       margin-top: 0;
@@ -119,7 +121,7 @@
     }
     p {
       margin-top: 0;
-      color: black;
+      color:black;
       font-size: 16px;
       line-height: 1.5em;
       text-align: left;
@@ -135,7 +137,7 @@
     .button {
       display: inline-block;
       width: 200px;
-      background-color: #414EF9;
+      background-color:white;
       border-radius: 3px;
       color: #ffffff;
       font-size: 15px;
@@ -149,10 +151,10 @@
       background-color: #28DB67;
     }
     .button--red {
-      background-color: rgb(226, 173, 185);
+      background-color:red;
     }
     .button--blue {
-      background-color: dodgerblue;
+      background-color:dodgerblue;
     }
 
     /*Media Queries ------------------------------ */
@@ -177,7 +179,7 @@
           <!-- Logo -->
           <tr>
             <td class="email-masthead">
-              <a class="email-masthead_name">Authors Haven</a>
+              <a class="email-masthead_name">Authors Heaven</a>
             </td>
           </tr>
           <!-- Email Body -->
@@ -187,28 +189,33 @@
                 <!-- Body content -->
                 <tr>
                   <td class="content-cell">
-                      <h1>Hi {{name}},</h1>
-                    <p>We need to make sure you're you!</p>
-                    <p>So we need to confirm the email address before we activate your account. </p>
+                    <h1>Hey {{name}},</h1>
+                    <p>You are almost ready to start enjoying Authors Heaven.</p>
+                    <p>Simply click the big blue button below to verify your email address</p>
                     <!-- Action -->
                     <table class="body-action" align="center" width="100%" cellpadding="0" cellspacing="0">
                       <tr>
                         <td align="center">
-                          <div>
-                            <a id="Link" href="{{ verification }}" class="button button--blue">Verify Email</a>
+                          <div class="white-section">
+                            <!--[if mso]><v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="{{verification}}" style="height:45px;v-text-anchor:middle;width:200px;" arcsize="7%" stroke="f" fill="t">
+                              <v:fill type="tile" color="#FF3665" />
+                              <w:anchorlock/>
+                              <center style="color:#ffffff;font-family:sans-serif;font-size:15px;">Reset your password</center>
+                            </v:roundrect><![endif]-->
+                            <a href="{{verification}}" class="button button--blue white-link">Verify email address</a>
                           </div>
                         </td>
                       </tr>
                     </table>
-                    <p>Thanks for creating an account with us. </p>
-
+                    <p>This verification is only valid for the next 24 hours, so be sure to use it right away.</p>
+                    <p>Thanks,<br>Authors Heaven team</p>
+                    <p><strong>P.S.</strong> We also love hearing from you and helping you with any issues you have. Please reach out to us if you want to ask a question or just say hi.</p>
                     <!-- Sub copy -->
                     <table class="body-sub">
                       <tr>
                         <td>
-                          <p class="sub">
-                                This message was sent to {{ name }}. If you have questions or complaints, please contact us.
-                          </p>
+                          <p class="sub">If you’re having trouble clicking the verification button, copy and paste the URL below into your web browser.</p>
+                          <p class="sub"><a href="{{verification}}">{{verification}}</a></p>
                         </td>
                       </tr>
                     </table>
@@ -224,8 +231,9 @@
                   <td class="content-cell">
                     <p class="sub center">&copy; 2019 Authors Heaven. All rights reserved.</p>
                     <p class="sub center">
-                      Authors Haven.
-                      <br>Andela Kenya , off USIU road
+                      Authors Heaven
+                      <br>{{product_address_line1}}
+                      <br>{{product_address_line2}}
                     </p>
                   </td>
                 </tr>

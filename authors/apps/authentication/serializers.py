@@ -5,10 +5,10 @@ from .models import User
 from django.core.validators import EmailValidator
 from django.core.exceptions import ValidationError
 from django.core.exceptions import ObjectDoesNotExist
-from django.utils import timezone
 from rest_framework.authtoken.models import Token
 from django.contrib.auth.password_validation import validate_password
 from authors.utils.password_validators import get_password_policy_errors
+from authors.utils.authentication_handlers import AuthTokenHandler
 
 
 class RegistrationSerializer(serializers.ModelSerializer):
@@ -300,7 +300,7 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
             raise serializers.ValidationError({
                 "token": "Invalid token"
             })
-        if self.expired_token(token_object):
+        if AuthTokenHandler.expired_token(token_object):
             raise serializers.ValidationError({
                 "token": "Expired token"
             })
@@ -340,12 +340,3 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
             raise serializers.ValidationError({
                 "password": "Passwords did not match"
             })
-
-    def expired_token(self, auth_token):
-        """
-        Checks expiry of token
-        """
-        utc_now = timezone.now()
-        expired = auth_token.created < utc_now - \
-            timezone.timedelta(hours=24)
-        return expired

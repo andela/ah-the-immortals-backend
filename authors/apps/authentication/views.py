@@ -27,7 +27,8 @@ from rest_framework.authentication import (
     get_authorization_header
 )
 from authors.utils.mailer import VerificationMail
-from django.utils import timezone
+from django.core.exceptions import ObjectDoesNotExist
+from authors.utils.authentication_handlers import AuthTokenHandler
 
 User = get_user_model()
 
@@ -41,25 +42,26 @@ class RegistrationAPIView(GenericAPIView):
     serializer_class = RegistrationSerializer
 
     def post(self, request):
-        user = request.data
+        data = request.data
 
         # The create serializer, validate serializer, save serializer pattern
         # below is common and you will see it a lot throughout this course and
         # your own work later on. Get familiar with it.
 
-        serializer = self.serializer_class(data=user)
+        serializer = self.serializer_class(data=data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
-
-        ConfirmationMail(serializer.data).send_mail()
+        user = User.objects.get(email=data.get("email"))
+        token = AuthTokenHandler.create_auth_token(user)
+        data["token"] = token.key
+        ConfirmationMail(data).send_mail()
         message = {
             "user": {
                 "email": serializer.data.get('email'),
                 "username": serializer.data.get("username"),
                 "token": serializer.data.get("token")
             },
-            "message":
-            "Account created successfully. Check your email."
+            "message": "Account created successfully. Check your email."
         }
         return Response(message, status=status.HTTP_201_CREATED)
 
@@ -173,10 +175,7 @@ class PasswordResetView(GenericAPIView):
         serializer.is_valid(raise_exception=True)
         email = data.get("email")
         user = User.objects.get(email=email)
-        token, created = Token.objects.get_or_create(user=user)
-        if not created:
-            token.created = timezone.now()
-            token.save()
+        token = AuthTokenHandler.create_auth_token(user)
         VerificationMail(user, token).send_mail()
         response = Response(
             data={"data": [{
@@ -223,19 +222,16 @@ class SignupEmailVerificationView(GenericAPIView):
 
     def get(self, request, token):
         try:
-            user_information = jwt.api_jwt.decode(
-                token, settings.SECRET_KEY, algorithms='HS256')
-        except jwt.api_jwt.DecodeError:
+            token = Token.objects.get(key=token)
+            user = token.user
+        except ObjectDoesNotExist:
             raise exceptions.AuthenticationFailed(
                 'Invalid Token. The token provided cannot be decoded!'
             )
-        except jwt.api_jwt.ExpiredSignatureError:
+        if AuthTokenHandler.expired_token(token):
             raise exceptions.AuthenticationFailed(
                 'The token used has expired. Please authenticate again!'
             )
-
-        user_email = user_information['user_data']['email']
-        user = User.objects.get(email=user_email)
         if user.is_verified:
             return Response({
                 "message": "Your email is already verified"
