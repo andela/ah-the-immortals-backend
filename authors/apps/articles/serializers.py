@@ -1,15 +1,17 @@
 import json
 from collections import OrderedDict
 
-from authors.apps.articles.models import Tag
-from authors.utils.baseserializer import BaseSerializer
 from django.db.models import Avg
 from rest_framework import serializers
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 
+from authors.apps.articles.models import Tag
+from authors.utils.baseserializer import BaseSerializer
+
 from .exceptions import ArticleNotFound
-from .models import Article, Comment, Favorite, RatingModel, Bookmarks, CommentHistory
+from .models import (Article, Bookmarks, Comment, CommentHistory, Favorite,
+                     RatingModel)
 
 
 class ArticleSerializer(BaseSerializer):
@@ -91,15 +93,34 @@ class ArticleSerializer(BaseSerializer):
         ratings = RatingModel().ratings(article.id, request.user.id)
         return ratings
 
+    def get_bookmarked(self, instance):
+        request = self.context.get('request')
+        slug = self.context.get('article')
+        if not request:
+            return False
+        if slug is None:
+            check_is_bookmarked = Bookmarks().check_is_bookmarked(
+                request.user.id, instance.id)
+            return check_is_bookmarked
+        else:
+            article = Article.objects.get(slug=slug)
+            check_is_bookmarked = Bookmarks().check_is_bookmarked(
+                request.user.id, instance.id)
+            return check_is_bookmarked
+
+    author = serializers.ReadOnlyField(source="get_author_details")
+    like_info = serializers.SerializerMethodField()
+    favorites = serializers.SerializerMethodField()
     ratings = serializers.SerializerMethodField()
     image_url = serializers.ReadOnlyField(source='get_image')
+    bookmarked = serializers.SerializerMethodField()
 
     class Meta:
         model = Article
         fields = (
             'slug', 'title', 'description', 'body', 'image', 'image_url',
             'created_at', 'updated_at', 'author', 'ratings', 'tagList',
-            'like_info', 'comments', 'favorites', 'readtime'
+            'like_info', 'comments', 'favorites', 'readtime', 'bookmarked'
         )
         extra_kwargs = {
             'image': {'write_only': True, 'required': False}
@@ -272,4 +293,4 @@ class BookmarkSerializers(serializers.ModelSerializer):
 
     class Meta:
         model = Bookmarks
-        fields = ['id', 'article_slug', 'user', 'article']
+        fields = ['id', 'user', 'article']

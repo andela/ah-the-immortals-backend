@@ -41,7 +41,7 @@ urlpatterns = [
          CommentAllHistoryView.as_view(), name='history_comments'),
     path('articles/<slug>/bookmark/', BookmarkAPIView.as_view(),
          name='bookmark'),
-    path('articles/bookmark/<id>/', DeleteBookMakeAPIView.as_view(),
+    path('articles/bookmark/<slug>/', DeleteBookMakeAPIView.as_view(),
          name='book_mark'),
     path('article/bookmarks/', GetBookMarksAPIVIew.as_view(),
          name='bookmarks'),

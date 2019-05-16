@@ -370,10 +370,11 @@ class BaseTest(APITestCase):
         remove bookmark
         """
         self.is_authenticated("adam@gmail.com", "@Us3r.com")
-        bookmark_id = self.create_bookmark()
-        id = bookmark_id.data['id']
+        bookmark_slug = self.create_bookmark()
+        slug = str(self.article.slug)
+
         return self.client.delete(reverse(
-            "articles:book_mark", args=[id]),
+            "articles:book_mark", args=[slug]),
         )
 
     def remove_bookmark_unsuccefully(self):
@@ -381,9 +382,9 @@ class BaseTest(APITestCase):
         remove bookmark unsuccefully
         """
         self.is_authenticated("adam@gmail.com", "@Us3r.com")
-        id = 76666556565464544
+        slug = 'theninja'
         return self.client.delete(reverse(
-            "articles:book_mark", args=[id]),
+            "articles:book_mark", args=[slug]),
         )
 
     def get_bookmarks_not_found(self):

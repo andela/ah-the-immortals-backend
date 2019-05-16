@@ -24,8 +24,8 @@ class TestBookmarks(BaseTest):
         Test article has been bookmarked
         """
         response = self.create_bookmark_already()
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual('Article has been bookmarked',
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual('Article has already been bookmarked',
                          response.data['message'])
 
     def test_bookmark_does_not_exist(self):
@@ -50,7 +50,7 @@ class TestBookmarks(BaseTest):
         """
         response = self.remove_bookmark_unsuccefully()
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
-        self.assertEqual("Bookmark not found", response.data['detail'])
+        self.assertEqual("Article does not exist", response.data['detail'])
 
     def test_article_does_not_exist(self):
         """
