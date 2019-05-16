@@ -98,7 +98,7 @@ def email_notification_handler(user, description):
     send_mail(
         "User Notification",
         '',
-        settings.EMAIL_HOST_USER,
+        settings.DEFAULT_EMAIL,
         [user.user.email],
         html_message=html_content)
 
