@@ -11,19 +11,17 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from ...utils.social_share_utils import generate_share_url
-from .exceptions import ArticleNotFound, Forbidden, ItemDoesNotExist
-from .models import (Article, Comment,
-                     Favorite, RatingModel,
-                     Tag, CommentHistory)
+from .exceptions import (ArticleNotFound, BookmarkDoesNotExist, Forbidden,
+                         ItemDoesNotExist)
 from .filters import ArticleFilter
+from .models import (Article, Bookmarks, Comment, CommentHistory, Favorite,
+                     RatingModel, Tag)
 from .serializers import (ArticlePaginator, ArticleSerializer,
-                          CommentChildSerializer, CommentDetailSerializer,
-                          CommentSerializer,
-                          DisplayCommentsSerializer,
-                          DisplaySingleComment,
-                          FavoritesSerializer,
-                          RatingSerializer,
-                          add_tag_list, CommentEditHistorySerializer)
+                          BookmarkSerializers, CommentChildSerializer,
+                          CommentDetailSerializer,
+                          CommentEditHistorySerializer, CommentSerializer,
+                          DisplayCommentsSerializer, DisplaySingleComment,
+                          FavoritesSerializer, RatingSerializer, add_tag_list)
 
 
 def get_serialiser_data(serializer_data, content):
@@ -122,10 +120,13 @@ class ListCreateArticleAPIView(ListCreateAPIView):
         paginator.page_size = page_limit
         result = paginator.paginate_queryset(articles, request)
         serializer = ArticleSerializer(result, many=True,
+                                       context={'request': request},
                                        remove_fields=['like_info',
                                                       'comments',
                                                       'favorites',
-                                                      'ratings'])
+                                                      'ratings'
+                                                      ])
+
         response = paginator.get_paginated_response({
             "articles": serializer.data
         })
@@ -699,3 +700,116 @@ class CommentAllHistoryView(GenericAPIView):
                 "comment": comment_hist
             }, status=status.HTTP_200_OK)
         return response
+
+
+class BookmarkAPIView(GenericAPIView):
+    """
+    class for posting a bookmark
+    """
+    permission_classes = (IsAuthenticated,)
+    serializer_class = BookmarkSerializers
+
+    def post(self, request, **kwargs):
+        """
+        Bookmark an article
+        """
+        try:
+            data = request.data
+            user = request.user
+            slug = self.kwargs['slug']
+            article = Article.objects.get(slug=slug)
+            bookmarks = Bookmarks.objects.filter(user=user, article=article)
+            if bookmarks:
+                response = Response({
+                    'errors': {
+                        'body': ['You already bookmarked this article']
+                    }
+                }, status=status.HTTP_400_BAD_REQUEST)
+            else:
+                data['article'] = article.id
+                data['user'] = request.user.id
+                serializer = self.serializer_class(data=data)
+                serializer.is_valid(raise_exception=True)
+                serializer.save()
+                article_id = serializer.data.get("article")
+                article = Article.objects.get(id=article_id)
+                serializer = ArticleSerializer(
+                    article,
+                    context={'article': slug, 'request': request},
+                    many=False
+                )
+                response = Response({
+                    "article": serializer.data,
+                    "message": "Article Bookmarked succefully"
+                }, status=status.HTTP_201_CREATED)
+
+                return response
+            return Response({"message": "Article has already been bookmarked"},
+                            status.HTTP_400_BAD_REQUEST)
+        except Article.DoesNotExist:
+            raise ArticleNotFound
+
+
+class GetBookMarksAPIVIew(GenericAPIView):
+    """
+    class for  getting bookmarks
+    """
+    permission_classes = (IsAuthenticated,)
+    serializer_class = ArticleSerializer
+
+    def get(self, request):
+        """
+        Get all bookmarks for a user
+        """
+        user = request.user
+        bookmarks = Bookmarks.objects.all().filter(user=user)
+        if not bookmarks:
+            return Response({"message": "Bookmarks not found"},
+                            status.HTTP_404_NOT_FOUND)
+        bookmarks = Bookmarks.objects.filter(user__pk=request.user.pk)
+        data = []
+        articles = [bookmark.article for bookmark in bookmarks]
+        for article in articles:
+            serializer = ArticleSerializer(
+                article,
+                remove_fields=[
+                    'like_info',
+                    'favorites',
+                    'ratings'
+                ],
+                context={'request': request},
+                many=False
+            )
+            data.append(serializer.data)
+        response = Response({
+            "articles": data,
+        }, status=status.HTTP_200_OK)
+        return response
+
+
+class DeleteBookMakeAPIView(GenericAPIView):
+    """
+    class for deleting a bookmark
+    """
+    permission_classes = (IsAuthenticated,)
+    serializer_class = BookmarkSerializers
+
+    def delete(self, request, slug):
+        """
+        Remove a bookmark
+        """
+        try:
+
+            inst = RetrieveUpdateArticleAPIView()
+            article = inst.retrieve_article(slug)
+            article = Article.objects.get(slug=slug)
+            book = Bookmarks.objects.filter(
+                user=request.user.id, article=article)
+            if book:
+                book.delete()
+                return Response({"message": "Bookmark has been removed"},
+                                status.HTTP_200_OK)
+            return Response({"message": "Permission denied"},
+                            status.HTTP_403_FORBIDDEN)
+        except Bookmarks.DoesNotExist:
+            raise BookmarkDoesNotExist

@@ -1,11 +1,17 @@
 from django.conf.urls import url
 from django.urls import path, re_path
 
-from .views import (CommentAPIView, CommentDetailAPIView, FavoritesView,
-                    FetchTags, LikeDislikeView, ListCreateArticleAPIView,
-                    ListUserFavoriteArticlesView, RateArticleAPIView,
-                    RetrieveUpdateArticleAPIView, SocialShareArticleView,
-                    CommentOneHistoryView, CommentAllHistoryView)
+from .views import (
+    CommentAPIView, CommentDetailAPIView, FavoritesView,
+    FetchTags, LikeDislikeView, ListCreateArticleAPIView,
+    ListUserFavoriteArticlesView, RateArticleAPIView,
+    RetrieveUpdateArticleAPIView, SocialShareArticleView,
+    CommentOneHistoryView,
+    CommentAllHistoryView,
+    GetBookMarksAPIVIew,
+    DeleteBookMakeAPIView,
+    BookmarkAPIView, SocialShareArticleView
+)
 
 
 app_name = 'articles'
@@ -33,4 +39,10 @@ urlpatterns = [
          CommentOneHistoryView.as_view(), name='history_'),
     path('articles/<slug>/comments/<int:comment>/history/',
          CommentAllHistoryView.as_view(), name='history_comments'),
+    path('articles/<slug>/bookmark/', BookmarkAPIView.as_view(),
+         name='bookmark'),
+    path('articles/bookmark/<slug>/', DeleteBookMakeAPIView.as_view(),
+         name='book_mark'),
+    path('article/bookmarks/', GetBookMarksAPIVIew.as_view(),
+         name='bookmarks'),
 ]

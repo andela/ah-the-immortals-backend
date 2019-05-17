@@ -15,3 +15,8 @@ class ArticleNotFound(APIException):
 class ItemDoesNotExist(APIException):
     status_code = 404
     default_detail = "Comment or the Article was not found"
+
+
+class BookmarkDoesNotExist(APIException):
+    status_code = 404
+    default_detail = "Bookmark not found"

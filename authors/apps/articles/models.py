@@ -55,6 +55,7 @@ class Article(VoteModel, models.Model):
     favorited = models.BooleanField(default=False)
     favoritesCount = models.PositiveSmallIntegerField(default=0)
     image = CloudinaryField('image')
+    bookmarked = models.BooleanField(default=False)
 
     class Meta:
         ordering = ['created_at', ]
@@ -257,3 +258,28 @@ class CommentHistory(models.Model):
     commentId = models.ForeignKey(Comment, on_delete=models.CASCADE)
     body = models.TextField(null=False, blank=False)
     created_at = models.DateTimeField(auto_now_add=True)
+
+
+class Bookmarks(models.Model):
+    """
+    Models for Bookmarking
+    """
+    article_slug = models.CharField(max_length=225)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    article = models.ForeignKey(Article, on_delete=models.CASCADE)
+
+    def check_is_bookmarked(self, user, article):
+        """
+        Get all articles bookmarked by user
+        """
+        try:
+            article = self.article
+            user = self.user
+        except Article.DoesNotExist:
+            pass
+
+        qs = Bookmarks.objects.filter(article_id=article, user_id=user)
+
+        if qs:
+            return True
+        return False

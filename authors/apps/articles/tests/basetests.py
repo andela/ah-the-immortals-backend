@@ -34,6 +34,9 @@ class BaseTest(APITestCase):
             "articles:comment", args=["not-found"])
         self.commentsdetail_url_one_comment = reverse(
             "articles:commentdetail", args=["this-is-mine", 18])
+        self.bookmark_url = reverse("articles:bookmark", args=["this-is-mine"])
+        self.bookmark_url_not = reverse(
+            "articles:bookmark", args=["not-found"])
 
         self.user1 = User.objects.create_user(
             username="adam",
@@ -217,7 +220,7 @@ class BaseTest(APITestCase):
             url,
             content_type="application/json"
         )
-        
+
     def delete_dislike(self, vote_type):
         """
         Like and Unlike
@@ -335,6 +338,88 @@ class BaseTest(APITestCase):
         return self.client.post(self.comments_url,
                                 data=json.dumps(self.new_comment),
                                 content_type="application/json")
+
+    def create_bookmark(self):
+        """
+        Method to create_bookmark
+        """
+        self.user
+        slug = str(self.article.slug)
+        url = reverse("articles:bookmark", args=[slug])
+        return self.client.post(
+            url
+        )
+
+    def get_all_bookmarks(self):
+        """
+        Method to get all bookmarks
+        """
+        self.user
+        slug = str(self.article.slug)
+        url = reverse("articles:bookmark", args=[slug])
+        self.client.post(
+            url
+        )
+        url_get = reverse("articles:bookmarks")
+        return self.client.get(
+            url_get
+        )
+
+    def remove_bookmark_succefully(self):
+        """
+        remove bookmark
+        """
+        self.is_authenticated("adam@gmail.com", "@Us3r.com")
+        bookmark_slug = self.create_bookmark()
+        slug = str(self.article.slug)
+
+        return self.client.delete(reverse(
+            "articles:book_mark", args=[slug]),
+        )
+
+    def remove_bookmark_unsuccefully(self):
+        """
+        remove bookmark unsuccefully
+        """
+        self.is_authenticated("adam@gmail.com", "@Us3r.com")
+        slug = 'theninja'
+        return self.client.delete(reverse(
+            "articles:book_mark", args=[slug]),
+        )
+
+    def get_bookmarks_not_found(self):
+        """
+        bookmarks not found
+        """
+        self.user
+        url_get = reverse("articles:bookmarks")
+        return self.client.get(
+            url_get
+        )
+
+    def create_bookmark_not_found(self):
+        """
+        Method to create_bookmark_not_found
+        """
+        self.user
+        url = self.bookmark_url_not
+        return self.client.post(
+            url
+        )
+
+    def create_bookmark_already(self):
+        """
+        Method to create_bookmark again
+        """
+        self.user
+        slug = str(self.article.slug)
+        url = reverse("articles:bookmark", args=[slug])
+        self.client.post(
+            url
+        )
+        return self.client.post(
+            url
+        )
 
     def create_comment_fail(self):
         """if
