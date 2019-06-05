@@ -18,7 +18,7 @@ urlpatterns = [
     path('users/oauth/', SocialAuthAPIView.as_view(), name='social'),
     path('users/password/reset/',
          PasswordResetView.as_view(), name='password_reset'),
-    path('users/password/reset/confirm/',
+    path('users/password/reset/confirm/<str:token>',
          PasswordResetConfirmView.as_view(), name='password_reset_confirm'),
     path('users/activate/<str:token>',
          SignupEmailVerificationView.as_view(), name='signup_verification'),

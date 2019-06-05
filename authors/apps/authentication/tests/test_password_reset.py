@@ -165,7 +165,7 @@ class TestPasswordReset(PasswordResetBaseTest):
         """
         Tests for null token
         """
-        response = self.password_reset_confirm()
+        response = self.password_reset_confirm_without_token()
         self.assertEqual(
             response.status_code,
             status.HTTP_400_BAD_REQUEST
