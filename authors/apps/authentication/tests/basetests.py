@@ -220,8 +220,6 @@ class PasswordResetBaseTest(BaseTest):
         self.email = self.user.email
         self.password_reset_url = reverse("authentication:password_reset")
         self.token = None
-        self.password_reset_confirm_url = reverse(
-            "authentication:password_reset_confirm")
         self.reset_data = {
             "email": self.email
         }
@@ -265,7 +263,10 @@ class PasswordResetBaseTest(BaseTest):
         """
         Sets password confirm url as the token changes
         """
-        self.password_reset_confirm_url += '?token='+self.token
+        self.password_reset_confirm_url = reverse(
+            "authentication:password_reset_confirm",
+            args=[self.token])
+        return self.password_reset_confirm_url
 
     def password_reset_confirm(self):
         """
@@ -273,6 +274,19 @@ class PasswordResetBaseTest(BaseTest):
         """
         response = self.client.post(
             path=self.password_reset_confirm_url,
+            data=self.password_data,
+            format="json"
+        )
+        return response
+
+    def password_reset_confirm_without_token(self):
+        """
+        Confirms password reset by posting new password
+        """
+        response = self.client.post(
+            path=reverse(
+                "authentication:password_reset_confirm",
+                args=[" "]),
             data=self.password_data,
             format="json"
         )

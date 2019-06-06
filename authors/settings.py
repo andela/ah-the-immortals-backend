@@ -274,7 +274,7 @@ SWAGGER_SETTINGS = {
         }
     }
 }
-PASSWORD_RESET_URL_PREFIX = '{}/api/users/password/reset/confirm/?token='.format(
+PASSWORD_RESET_URL_PREFIX = '{}/resetconfirm/'.format(
     DOMAIN)
 EMAIL_BACKEND = os.getenv('EMAIL_BACKEND')
 EMAIL_HOST = os.getenv('EMAIL_HOST')

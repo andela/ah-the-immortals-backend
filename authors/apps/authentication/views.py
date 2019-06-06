@@ -193,11 +193,11 @@ class PasswordResetConfirmView(GenericAPIView):
     permission_classes = (AllowAny,)
     serializer_class = PasswordResetConfirmSerializer
 
-    def post(self, request):
+    def post(self, request, **kwargs):
         request.POST._mutable = True
         data = request.data
         token, password = (
-            request.GET.get("token"),
+            kwargs['token'],
             data.get("password")
         )
         data["token"] = token
