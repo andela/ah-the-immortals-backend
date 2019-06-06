@@ -328,6 +328,7 @@ class LikeDislikeView(GenericAPIView):
         response, voted = self.process_vote_type(request, slug, vote_type)
         if voted:
             article = RetrieveUpdateArticleAPIView().retrieve_article(slug)
+            article.votes.delete(request.user.id)
             serializer = ArticleSerializer(
                 article,
                 context={'article': slug, 'request': request, },

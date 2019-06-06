@@ -17,7 +17,10 @@ class Profile(models.Model):
     last_name = models.CharField(max_length=30, blank=True)
     bio = models.TextField(max_length=500, blank=True)
     image = CloudinaryField(
-        'image', default='https://res.cloudinary.com/grean/image/upload/v1556488518/samples/vbioaj1wwewmtmeryucv.jpg')
+        'image',
+        default=
+        'https://res.cloudinary.com/grean/image/upload/v1560445304/default_ddfimn.png'
+    )
     following = models.ManyToManyField(
         'self', symmetrical=False, related_name='w_following')
     created_at = models.DateTimeField(auto_now_add=True)
