@@ -64,7 +64,7 @@ class ConfirmationMail:
         self.message = EmailMultiAlternatives(
             subject="Welcome {}".format(self.username),
             body="Confirmation email",
-            from_email="noreply@authorsheaven.com",
+            from_email=settings.DEFAULT_EMAIL,
             to=[self.email]
         )
         self.message.attach_alternative(html_body, "text/html")
