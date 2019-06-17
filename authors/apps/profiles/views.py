@@ -1,5 +1,4 @@
 from django.core.exceptions import ValidationError
-
 from rest_framework.exceptions import APIException
 from rest_framework.generics import GenericAPIView, ListAPIView
 from rest_framework import permissions, status
@@ -8,9 +7,12 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from authors.apps.authentication.models import User
 from .exceptions import *
 import json
+from .serializers import (
+    UserProfileSerializer, UpdateUserProfileSerializer,
+    FollowingSerializer, FollowersListSerializer, UserListSerializer)
 
-
-from .serializers import UserProfileSerializer, UpdateUserProfileSerializer, FollowingSerializer, FollowersListSerializer, UserListSerializer
+from authors.apps.articles.serializers import ArticleSerializer
+from authors.apps.articles.models import Article
 from .models import Profile
 from .renderers import FollowersJSONRenderer
 
@@ -34,15 +36,20 @@ class UserProfileView(GenericAPIView):
                     'user': ['User does not exist']
                 }
             }, status=status.HTTP_404_NOT_FOUND)
-
+        articles = Article.objects.filter(author__username=username)
+        articles_serializer = ArticleSerializer(
+            articles, many=True, context={'request': request},
+            remove_fields=['like_info', 'comments', 'favorites', 'ratings']
+        )
+        articles = articles_serializer.data
         if request.user.username == username:
             serializer = UserProfileSerializer(
-                profile, context={'request': request},
+                profile, context={'request': request, 'articles': articles},
                 remove_fields=['following']
             )
         else:
             serializer = UserProfileSerializer(
-                profile, context={'request': request}
+                profile, context={'request': request, 'articles': articles}
             )
         return Response({
             'profile': serializer.data

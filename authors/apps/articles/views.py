@@ -485,7 +485,7 @@ class CommentAPIView(GenericAPIView):
     """
     class for post and get comments
     """
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (IsAuthenticatedOrReadOnly,)
     serializer_class = CommentSerializer
 
     def post(self, request, **kwargs):

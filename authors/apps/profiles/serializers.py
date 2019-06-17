@@ -14,6 +14,7 @@ class UserProfileSerializer(BaseSerializer):
 
     username = serializers.ReadOnlyField(source='fetch_username')
     img_url = serializers.ReadOnlyField(source='fetch_image')
+    articles = serializers.SerializerMethodField()
     created_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S")
     updated_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S")
     following = serializers.SerializerMethodField()
@@ -30,10 +31,15 @@ class UserProfileSerializer(BaseSerializer):
         follow_status = my_profile.if_following(instance)
         return follow_status
 
+    def get_articles(self, instance):
+        articles = self.context.get('articles', None)
+        return articles
+
     class Meta:
         model = Profile
         fields = (
-            'username', 'first_name', 'last_name', 'bio', 'img_url', 'created_at', 'updated_at', 'following'
+            'username', 'first_name', 'last_name', 'bio', 'img_url',
+            'articles', 'created_at', 'updated_at', 'following'
         )
 
 
