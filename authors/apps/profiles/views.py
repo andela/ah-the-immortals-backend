@@ -145,7 +145,7 @@ class FollowAPI(GenericAPIView):
             raise UserNotFound
         to_check = Profile.objects.get(user_id=the_user.id)
         my_follows = to_check.following_list()
-        serializer = self.get_serializer(my_follows, many=True)
+        serializer = UserProfileSerializer(my_follows, many=True)
         return Response({"following": serializer.data,
                          "count": len(serializer.data)},
                         status=status.HTTP_200_OK)

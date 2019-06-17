@@ -99,9 +99,8 @@ class UnreadNotificationsAPIview(NotificationApiView):
     list all user's unread notifications
     """
 
-    def notifications(self, request):
-        request.user.notifications.unread()
-        return request.user.notifications.active()
+    def notifications(self, request): 
+        return request.user.notifications.unread()
 
 
 class DeleteSingleNotificationAPIView(NotificationApiView):
