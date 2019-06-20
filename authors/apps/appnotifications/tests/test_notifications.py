@@ -50,6 +50,14 @@ class TestNotifications(NotificationBaseTest):
             'in_app_notifications_subscription': 'false'})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
+    def test_get_subscribed_notififications(self):
+        """
+        Test subscribing and unsubscribing of notifications
+        """
+        self.is_authenticated("jim@gmail.com", "@Us3r.com")
+        response = self.client.get(self.subscribe_unsubscribe_url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
     def test_unsubscribe_email_notification(self):
         """
         Test unsubscribing from email notifications
