@@ -286,15 +286,8 @@ class RatingModel(models.Model):
         Model to display rating for users in an articles
         """
 
-        try:
-            article = self.article
-            user = self.rated_by
-        except Article.DoesNotExist:
-            pass
-
         queryset = RatingModel.objects.filter(
-            article_id=article, rated_by_id=user).first()
-
+            article_id=article).first()
         if queryset:
             return {
                 "my_ratings": queryset.rate,
