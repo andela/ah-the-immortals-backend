@@ -281,17 +281,22 @@ class RatingModel(models.Model):
             "updated_at": self.article.updated_at
         }
 
-    def ratings(self, article, user):
+    def ratings(self, article_id, user):
         """
         Model to display rating for users in an articles
         """
-
-        queryset = RatingModel.objects.filter(
-            article_id=article).first()
-        if queryset:
+        queryset1 = RatingModel.objects.filter(
+            article_id=article_id, rated_by_id=user).first()
+        queryset2 = RatingModel.objects.filter(
+            article_id=article_id).first()
+        if queryset1:
             return {
-                "my_ratings": queryset.rate,
-                "average_ratings": Article().average_ratings(article)
+                "my_ratings": queryset1.rate,
+                "average_ratings": Article().average_ratings(article_id)
+            }
+        elif queryset2:
+            return {
+                "average_ratings": Article().average_ratings(article_id)
             }
         return 0
 

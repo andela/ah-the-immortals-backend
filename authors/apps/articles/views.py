@@ -131,8 +131,7 @@ class ListCreateArticleAPIView(ListCreateAPIView):
             remove_fields=[
                 'like_info',
                 'comments',
-                'favorites',
-                'ratings'
+                'favorites'
             ]
         )
         response = paginator.get_paginated_response({
