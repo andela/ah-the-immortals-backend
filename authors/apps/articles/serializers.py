@@ -91,9 +91,8 @@ class ArticleSerializer(BaseSerializer):
         return mapped_data
 
     def get_ratings(self, obj):
-        article = self.get_likes_data()
         request = self.context.get('request', None)
-        ratings = RatingModel().ratings(article.id, request.user.id)
+        ratings = RatingModel().ratings(obj.id, request.user.id)
         return ratings
 
     def get_bookmarked(self, instance):
