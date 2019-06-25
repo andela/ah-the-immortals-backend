@@ -31,19 +31,18 @@ def create_article_handler(sender, instance, created, **kwargs):
         return
     for user in followers:
         if user.user.notification_preferences.in_app_notifications:
-            url = reverse(
-                "articles:articles", args=[instance.slug])
+            url = f"/post/{instance.slug}"
             url = f"{settings.DOMAIN}{url}"
             notify.send(
                 article_author,
                 recipient=user.user,
                 description=description,
-                verb=verbs.ARTICLE_CREATION,
+                verb=instance.slug,
                 action_object=instance,
                 resource_url=url
             )
         if user.user.notification_preferences.email_notifications:
-            email_notification_handler(user, description)
+            email_notification_handler(user, description, url)
 
 
 def comment_handler(sender, instance, created, **kwargs):
@@ -75,10 +74,10 @@ def comment_handler(sender, instance, created, **kwargs):
                         resource_url=resource_url
                         )
         if email.notification_preferences.email_notifications:
-            email_notification_handler(user, description)
+            email_notification_handler(user, description, resource_url)
 
 
-def email_notification_handler(user, description):
+def email_notification_handler(user, description, resource_url):
     token, created = Token.objects.get_or_create(user=user.user)
     if not created:
         token.created = timezone.now()
@@ -86,7 +85,6 @@ def email_notification_handler(user, description):
     url = reverse(
         "notifications:opt_out_link", args=[token])
     opt_out_link = f'{settings.DOMAIN}{url}'
-    resource_url = url = f"{settings.DOMAIN}{url}"
 
     html_content = render_to_string(
         'notification_template.html', context={
