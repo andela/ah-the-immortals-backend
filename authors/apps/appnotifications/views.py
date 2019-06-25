@@ -30,6 +30,12 @@ class SubscribeUnsubscribeAPIView(RetrieveUpdateAPIView):
         serializer.save()
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+    def get(self, request, *args, **kwargs):
+        user = UserNotification.objects.get(user=request.user)
+        if user:
+            serializer = self.serializer_class(user, many=False)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
 
 class UnsubscribeEmailAPIView(GenericAPIView):
     """
