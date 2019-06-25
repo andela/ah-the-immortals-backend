@@ -186,7 +186,7 @@ If a request fails any validations, expect errors in the following format:
 
 ## Endpoints:
 
-### Authentication:
+### User Login:
 
 `POST /api/users/login`
 
@@ -194,18 +194,16 @@ Example request body:
 
 ```source-json
 {
-  "user":{
     "email": "jake@jake.jake",
     "password": "jakejake"
-  }
 }
 ```
 
-No authentication required, returns a User
+No authentication required, returns User data
 
 Required fields: `email`, `password`
 
-### Registration:
+### User Registration:
 
 `POST /api/users`
 
@@ -213,13 +211,22 @@ Example request body:
 
 ```source-json
 {
-  "user":{
     "username": "Jacob",
     "email": "jake@jake.jake",
     "password": "jakejake"
-  }
 }
 ```
+No authentication required, returns User data
+
+Required fields: `email`, `password`, `username`
+
+### User Verification:
+
+`GET /api/users/activate/:token`
+
+No authentication required, verifies user
+
+No additional parameters required
 
 ### Social Login:
 
@@ -253,9 +260,9 @@ Twitter:
   }
 ```
 
-No authentication required, returns a User
+No authentication required, returns User data
 
-Required fields: `email`, `username`, `password`
+Required fields: `provider`, `access_token` and `access_token_secret` for twitter
 
 ### Get Current User
 
@@ -265,17 +272,15 @@ Authentication required, returns a User that's the current user
 
 ### Update User
 
-`PUT /api/user`
+`PUT/PATCH /api/user`
 
 Example request body:
 
 ```source-json
 {
-  "user":{
     "email": "jake@jake.jake",
     "bio": "I like to skateboard",
     "image": "https://i.stack.imgur.com/xHWG8.jpg"
-  }
 }
 ```
 
@@ -299,7 +304,7 @@ No authentication required, returns a token
 Required fields: `email`
 
 ### Password Reset Confirm
-`POST /api/users/password/reset/confirm/`
+`POST /api/users/password/reset/confirm/:token`
 
 Example request body:
 
@@ -312,17 +317,29 @@ Example request body:
 
 No authentication required, returns a success message
 
+### Get All Profiles
+
+`GET /api/profiles/`
+
+Authentication optional, returns all Profiles
+
 ### Get Profile
 
 `GET /api/profiles/:username`
 
 Authentication optional, returns a Profile
 
+### Update User Profile
+
+`PATCH /api/profiles/:username/`
+
+Authentication required, returns an updated Profile
+
 ### Follow user
 
 `POST /api/profiles/:username/follow`
 
-Authentication required, returns a Profile
+Authentication required
 
 No additional parameters required
 
@@ -330,9 +347,46 @@ No additional parameters required
 
 `DELETE /api/profiles/:username/follow`
 
-Authentication required, returns a Profile
+Authentication required
 
 No additional parameters required
+
+### Get all Users followed by User
+
+`GET /api/profiles/:username/follow/`
+
+Authentication required
+
+No additional parameters required
+
+### Get all Users following a User
+
+`GET /api/profiles/:username/followers/`
+
+Authentication required
+
+No additional parameters required
+
+### Create Article
+
+`POST /api/articles`
+
+Example request body:
+
+```source-json
+{
+    "title": "How to train your dragon",
+    "description": "Ever wonder how?",
+    "body": "You have to believe",
+    "tagList": ["reactjs", "angularjs", "dragons"]
+}
+```
+
+Authentication required, will create and return an Article
+
+Required fields: `title`, `description`, `body`
+
+Optional fields: `tagList` as an array of Strings
 
 ### List Articles
 
@@ -372,32 +426,12 @@ Can also take `limit` and `offset` query parameters like List Articles
 
 Authentication required, will return multiple articles created by followed users, ordered by most recent first.
 
-### Get Article
+### Get One Article
 
 `GET /api/articles/:slug`
 
 No authentication required, will return single article
 
-### Create Article
-
-`POST /api/articles`
-
-Example request body:
-
-```source-json
-{
-    "title": "How to train your dragon",
-    "description": "Ever wonder how?",
-    "body": "You have to believe",
-    "tagList": ["reactjs", "angularjs", "dragons"]
-}
-```
-
-Authentication required, will return an Article
-
-Required fields: `title`, `description`, `body`
-
-Optional fields: `tagList` as an array of Strings
 
 ### Update Article
 
@@ -431,20 +465,38 @@ Example request body:
 
 ```source-json
 {
-  "comment": {
     "body": "His name was my name too."
-  }
 }
 ```
 
 Authentication required, returns the created Comment
 Required field: `body`
 
-### Get Comments from an Article
+### Get Comments for an Article
 
 `GET /api/articles/:slug/comments`
 
-Authentication optional, returns multiple comments
+Authentication optional, returns multiple comments for specific article
+
+### Get specific Comment for an Article
+
+`GET /api/articles/:slug/comments/:id/`
+
+Authentication optional, returns one comment for specific article
+
+### Update Comment
+
+`PUT /api/articles/:slug/comments/:id/`
+
+Example request body:
+
+```source-json
+{
+    "body": "Did you train your dragon?"
+}
+```
+
+Authentication required, returns the updated Comment
 
 ### Delete Comment
 
@@ -452,11 +504,34 @@ Authentication optional, returns multiple comments
 
 Authentication required
 
+### Like a Comment
+
+`POST /api/articles/comments/:id/:vote_type/`
+
+Authentication required, returns the Comment and likes information
+
+vote_type is `like`
+
+id is the Comment id
+
+### Get All Comment History
+
+`GET /api/articles/:slug/comments/:comment/history/`
+
+Authentication required, returns all update history of the comment
+
+### Get Specific Comment History
+
+`GET /api/articles/:slug/comments/:comment/history/:id/`
+
+Authentication required, returns the specified update history of the comment
+
 ### Favorite Article
 
 `POST /api/articles/:slug/favorite`
 
 Authentication required, returns the Article
+
 No additional parameters required
 
 ### Unfavorite Article
@@ -467,9 +542,89 @@ Authentication required, returns the Article
 
 No additional parameters required
 
+### Get All Favorites for User
+
+`GET /api/articles/favorites/me/`
+
+Authentication required, returns Favorited Articles
+
+No additional parameters required
+
+### Bookmark Article
+
+`POST /api/articles/{slug}/bookmark/`
+
+Authentication required, returns the Article bookmarked with it's comments
+
+No additional parameters required
+
+### Get All Bookmarks for specific User
+
+`GET /api/article/bookmarks/`
+
+Authentication required, returns Bookmarked Articles
+
+No additional parameters required
+
+### Remove a specific Bookmark
+
+`DELETE /api/articles/bookmark/:slug/`
+
+Authentication required, removes a bookmark
+
+No additional parameters required
+
+### Rate Article
+
+`POST /api/articles/:slug/rate/`
+
+Example request body:
+
+```source-json
+{
+    "rate": 3
+}
+```
+
+Authentication required, returns the Article rated with it's the rating information
+
+No additional parameters required
+
+### Share Article
+
+`GET /api/articles/:slug/share/:provider/`
+
+Authentication required, returns a share link with a url to the article
+
+Provider can be `facebook`, `twitter` e.t.c
+
+No additional parameters required
+
+### Like or Dislike an Article
+
+`POST /api/articles/:slug/:vote_type/`
+
+Authentication required, returns the Article liked or disliked
+
+vote_type can be either `like` or `dislike`
+
+No additional parameters required
+
+### Remove vote for an Article
+
+`DELETE /api/articles/:slug/:vote_type/`
+
+Authentication required, returns the Article whose vote has been removed
+
+vote_type can be either `like` or `dislike`
+
+No additional parameters required
+
 ### Get Tags
 
 `GET /api/tags`
+
+Authentication optional, returns a list of all tags in the application
 
 ### Create Highlight
 
@@ -506,22 +661,112 @@ Example request body:
 
 Authentication required, returns the updated Highlight
 
-Optional fields: `start_index`, `end_index`, `comment`
+Update fields: `comment`
 
 ### Delete Highlight
 
 `DELETE /api/articles/:slug/highlight/:id/`
 
-Authentication required
+Authentication required, Removes Highlight
 
 ### Get Highlights
 `GET /api/articles/:slug/highlight/`
 
 Authentication required, returns all highlights by the user on an article
 
+No additional parameters required
+
+### Report and Article
+
+`POST /api/article/:slug/escalate/`
+
+Example request body:
+
+```source-json
+{  
+  "reason": "Plagiarism",
+  "description": "The article is plagiarized"
+}
+```
+
+Authentication required, returns a reported article together with the report
+
+No additional parameters required
+
+### Get Reported Articles
+
+`GET /api/article/escalate/`
+
+Authentication required, Creates a report for an article
+
+Admin required
+
+### Delete Reported Article
+
+`DELETE /api/article/:slug/escalate/`
+
+Authentication required, Deletes reported article
+
+Admin required
+
+### Get All user Notifications
+
+`GET /api/notifications/`
+
+Authentication required, Returns all user notifications
+
+### Get single Notifications
+
+`GET /api/notifications/:id/`
+
+Authentication required, returns single notification
+
+### Get user Notifications Subscriptions
+
+`GET /api/notifications/subscription/`
+
+Authentication required, Returns all notifications sunscriprions by user
+
+### Delete One Notification by user
+
+`DELETE /api/notifications/:id/`
+
+Authentication required, Deletes single notification
+
+### Delete All User Notifications
+
+`DELETE /api/notifications/`
+
+Authentication required, Deletes all user notifications
+
+### Subscribe or Unsubscribe to Notifications
+
+`PATCH /api/notifications/subscription`
+
+Authentication required, Updates user subscription to receive notifications
+
+### Update Subscription to Notifications
+
+`PUT /api/notifications/subscription/`
+
+Authentication required, Updates user subscription to receive notifications
+
+### Get All Unread Notifications
+
+`GET /api/notifications/unread/`
+
+Authentication required, Returns all unread notifications
+
+### Unsubscribe from Email Notifications
+
+`GET /api/notifications/unsubscribe_email/:token/`
+
+Authentication optional, Unsubscribes user from Email notifications
+
+
 ## Local Setup
 
-- First Create python virtual env
+- First Create python virtual environment
 
 ```
  $ virtualenv -p python3 env
@@ -533,7 +778,7 @@ Authentication required, returns all highlights by the user on an article
  $ pip install -r requirements.txt
 ```
 
-- Create a .env file and set variables as in the .env-example
+- Create a .env file in the root folder and set variables as in the .env-example
 
 - Create postgres database
 
@@ -548,8 +793,27 @@ Authentication required, returns all highlights by the user on an article
  postgres=# \q
 ```
 
+- Source the .env file
+
+```
+ $ source .env
+```
+
+- Run Migrations
+
+```
+ $ python manage.py makemigrations
+ $ python manage.py migrate
+```
+
 - Run Server
 
 ```
  $ python manage.py runserver
+```
+
+- Run Tests
+
+```
+ $ python manage.py test
 ```
