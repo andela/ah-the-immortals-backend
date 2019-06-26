@@ -298,7 +298,9 @@ class RatingModel(models.Model):
             return {
                 "average_ratings": Article().average_ratings(article_id)
             }
-        return 0
+        return {
+            "average_ratings": 0
+        }
 
 
 class CommentHistory(models.Model):

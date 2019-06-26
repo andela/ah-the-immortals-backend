@@ -127,7 +127,8 @@ class ArticleSerializer(BaseSerializer):
         fields = (
             'slug', 'title', 'description', 'body', 'image', 'image_url',
             'created_at', 'updated_at', 'author', 'ratings', 'tagList',
-            'like_info', 'comments', 'favorites', 'readtime', 'bookmarked'
+            'like_info', 'comments', 'favorites', 'readtime', 'bookmarked',
+            'num_vote_up', 'num_vote_down'
         )
         extra_kwargs = {
             'image': {'write_only': True, 'required': False}
