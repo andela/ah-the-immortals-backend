@@ -26,13 +26,12 @@ def create_article_handler(sender, instance, created, **kwargs):
         article_author,
         title.upper(),
         instance.created_at.strftime('%d-%B-%Y %H:%M'))
-
+    url = f"/post/{instance.slug}"
+    url = f"{settings.DOMAIN}{url}"
     if not followers:
         return
     for user in followers:
         if user.user.notification_preferences.in_app_notifications:
-            url = f"/post/{instance.slug}"
-            url = f"{settings.DOMAIN}{url}"
             notify.send(
                 article_author,
                 recipient=user.user,
