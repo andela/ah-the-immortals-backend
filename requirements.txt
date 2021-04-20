@@ -46,7 +46,7 @@ pep8==1.7.1
 pluggy==0.9.0
 psycopg2==2.8.2
 psycopg2-binary==2.8.2
-py==1.8.0
+py==1.10.0
 pycodestyle==2.5.0
 PyJWT==1.4.2
 pylint==2.3.1
